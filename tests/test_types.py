@@ -121,6 +121,19 @@ def test_enum_symbols():
     assert avtypes.Color._symbols[2] is avtypes.Color.BROWN
 
 
+def test_enum_values():
+    assert avtypes.Color._values['BLUE'] is avtypes.Color.BLUE
+    assert avtypes.Color._values['GREEN'] is avtypes.Color.GREEN
+    assert avtypes.Color._values['BROWN'] is avtypes.Color.BROWN
+
+
+def test_enum_symbol_visibility():
+    for color in (avtypes.Color.BLUE, avtypes.Color.GREEN, avtypes.Color.BROWN):
+        assert not hasattr(color, 'BLUE')
+        assert not hasattr(color, 'GREEN')
+        assert not hasattr(color, 'BROWN')
+
+
 def test_enum_hash():
     assert hash(avtypes.Color.BLUE) == 0
     assert hash(avtypes.Color.GREEN) == 1

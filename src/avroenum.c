@@ -18,6 +18,37 @@
 #include "util.h"
 #include "structmember.h"
 
+/* Quite clever. We want the enum type itself to have Color.GREEN, Color.BLUE attributes,
+ * but we don't want the enum symbol objects to inherit these.
+ * We define tp_getattro for the *type* of the enum type, so it looks up "GREEN" etc.
+ */
+static PyObject *
+avro_enum_meta_get_attro(PyObject *enumtype, PyObject *attr_name)
+{
+    PyObject *values;
+    PyObject *obj;
+    PyObject *str;
+
+    str = PyString_InternFromString("_values");
+    values = (*PyType_Type.tp_getattro)(enumtype, str);
+
+    Py_DECREF(str);
+
+    if (values != NULL) {
+        obj = PyObject_GetItem(values, attr_name);
+
+        Py_DECREF(values);
+
+        if (obj != NULL) {
+            return obj;
+        }
+    }
+
+    PyErr_Clear();
+
+    return (*PyType_Type.tp_getattro)(enumtype, attr_name);
+}
+
 static PyObject *
 avro_enum_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
 {
@@ -121,6 +152,50 @@ avro_enum_richcompare(PyObject *a, PyObject *b, int op)
     return res;
 }
 
+static PyTypeObject enum_meta_type_object = {
+    PyObject_HEAD_INIT(NULL)
+    0,                         /* ob_size */
+    "AvroEnumMeta",            /* tp_name */
+    sizeof(AvroEnum),          /* tp_basicsize */
+    0,                         /* tp_itemsize */
+    0,                         /* tp_dealloc */
+    0,                         /* tp_print */
+    0,                         /* tp_getattr */
+    0,                         /* tp_setattr */
+    0,                         /* tp_compare */
+    0,                         /* tp_repr */
+    0,                         /* tp_as_number */
+    0,                         /* tp_as_sequence */
+    0,                         /* tp_as_mapping */
+    0,                         /* tp_hash */
+    0,                         /* tp_call */
+    0,                         /* tp_str */
+    (getattrofunc)avro_enum_meta_get_attro,  /* tp_getattro */
+    0,                         /* tp_setattro */
+    0,                         /* tp_as_buffer */
+    Py_TPFLAGS_DEFAULT,        /* tp_flags */
+    0,                         /* tp_doc */
+    0,                         /* tp_traverse */
+    0,                         /* tp_clear */
+    0,                         /* tp_richcompare */
+    0,                         /* tp_weaklistoffset */
+    0,                         /* tp_iter */
+    0,                         /* tp_iternext */
+    0,                         /* tp_methods */
+    0,                         /* tp_members */
+    0,                         /* tp_getset */
+    &PyType_Type,              /* tp_base */
+    0,                         /* tp_dict */
+    0,                         /* tp_descr_get */
+    0,                         /* tp_descr_set */
+    0,                         /* tp_dictoffset */
+    0,                         /* tp_init */
+    0,                         /* tp_alloc */
+    0                          /* tp_new */
+};
+
+static int initialised_meta_type = 0;
+
 static PyMethodDef avro_enum_methods[] = {
     {"__reduce__", (PyCFunction)avro_enum_reduce, METH_VARARGS, ""},
     {0}
@@ -178,8 +253,16 @@ create_new_type(avro_schema_t schema)
     size_t i;
     const char *enum_name = avro_schema_name(schema);
     PyObject *symbols;
+    PyObject *values;
     AvroEnum *obj;
     int nsymbols;
+
+    if (!initialised_meta_type) {
+        if (PyType_Ready(&enum_meta_type_object) < 0) {
+            return NULL;
+        }
+        initialised_meta_type = 1;
+    }
 
     PyTypeObject *type = (PyTypeObject *)PyMem_Malloc(sizeof(PyTypeObject));
     memcpy(type, &empty_type_object, sizeof(PyTypeObject));
@@ -188,9 +271,12 @@ create_new_type(avro_schema_t schema)
     type->tp_dict = PyDict_New();
 
     symbols = PyList_New(0);
+    values = PyDict_New();
 
     PyMapping_SetItemString(type->tp_dict, "_symbols", symbols);
+    PyMapping_SetItemString(type->tp_dict, "_values", values);
 
+    Py_TYPE(type) = &enum_meta_type_object;  /* set type of new type object */
     if (PyType_Ready(type) < 0) {
         return NULL;
     }
@@ -207,8 +293,8 @@ create_new_type(avro_schema_t schema)
         obj->value = i;
         obj->name = pymem_strdup(name);
 
-        PyMapping_SetItemString((PyObject *)type->tp_dict, (char*)name, (PyObject *)obj);
-        PyList_Append(symbols, (PyObject *)obj);
+        PyMapping_SetItemString(values, name, (PyObject *)obj);  /* type._values */
+        PyList_Append(symbols, (PyObject *)obj);  /* type._symbols */
 
         Py_DECREF((PyObject *)obj);
     }
