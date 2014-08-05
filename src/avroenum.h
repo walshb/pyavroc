@@ -29,4 +29,6 @@ typedef struct {
 
 PyObject *get_python_enum_type(PyObject *types, avro_schema_t schema);
 
+int avroenum_init();
+
 #endif

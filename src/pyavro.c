@@ -134,6 +134,10 @@ init_pyavroc(void)
         INIT_RETURN(NULL);
     }
 
+    if (avroenum_init() < 0) {
+        return;
+    }
+
     avroDeserializerType.tp_new = PyType_GenericNew;
     if (PyType_Ready(&avroDeserializerType) < 0) {
         INIT_RETURN(NULL);

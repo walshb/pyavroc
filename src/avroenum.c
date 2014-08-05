@@ -156,7 +156,7 @@ static PyTypeObject enum_meta_type_object = {
     PyObject_HEAD_INIT(NULL)
     0,                         /* ob_size */
     "AvroEnumMeta",            /* tp_name */
-    sizeof(AvroEnum),          /* tp_basicsize */
+    0,                         /* tp_basicsize */
     0,                         /* tp_itemsize */
     0,                         /* tp_dealloc */
     0,                         /* tp_print */
@@ -193,8 +193,6 @@ static PyTypeObject enum_meta_type_object = {
     0,                         /* tp_alloc */
     0                          /* tp_new */
 };
-
-static int initialised_meta_type = 0;
 
 static PyMethodDef avro_enum_methods[] = {
     {"__reduce__", (PyCFunction)avro_enum_reduce, METH_VARARGS, ""},
@@ -257,13 +255,6 @@ create_new_type(avro_schema_t schema)
     AvroEnum *obj;
     int nsymbols;
 
-    if (!initialised_meta_type) {
-        if (PyType_Ready(&enum_meta_type_object) < 0) {
-            return NULL;
-        }
-        initialised_meta_type = 1;
-    }
-
     PyTypeObject *type = (PyTypeObject *)PyMem_Malloc(sizeof(PyTypeObject));
     memcpy(type, &empty_type_object, sizeof(PyTypeObject));
 
@@ -317,4 +308,14 @@ get_python_enum_type(PyObject *types, avro_schema_t schema)
     }
 
     return type;
+}
+
+int
+avroenum_init() {
+    enum_meta_type_object.tp_basicsize = PyType_Type.tp_basicsize;
+    if (PyType_Ready(&enum_meta_type_object) < 0) {
+        return -1;
+    }
+
+    return 0;
 }
