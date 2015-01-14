@@ -1,0 +1,9 @@
+*~
+*.pyc
+/build/
+/dist/
+*.iml
+*.egg-info
+.idea
+/local_avro/
+/*.egg-info/
