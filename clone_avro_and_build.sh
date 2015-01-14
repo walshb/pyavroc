@@ -56,6 +56,6 @@ export LDFLAGS="-L$AVRO/dist/lib -Wl,-rpath,$AVRO/dist/lib"
 
 python setup.py build
 
-export PYTHONPATH=$(readlink -f build/lib*):$AVRO/lang/py/build/lib
+export PYTHONPATH=$(readlink -e build/lib*):$(readlink -e $AVRO/lang/py/build/lib*)
 
 py.test -sv tests
