@@ -15,8 +15,6 @@
 # limitations under the License.
 
 
-import pytest
-
 import sys
 import os
 import shutil
