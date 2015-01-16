@@ -17,12 +17,14 @@
 
 import sys
 import os
+import pytest
 import shutil
 import tempfile
 
-import avro.schema
-import avro.datafile
-import avro.io
+if sys.version_info < (3,):
+    import avro.schema
+    import avro.datafile
+    import avro.io
 
 import pyavroc
 
@@ -100,6 +102,7 @@ def _pyavroc_read(filename, types):
     return list(fp)
 
 
+@pytest.mark.skipif('sys.version_info >= (3,)', reason='py-avro broken for Python3')
 def test_load_same():
     dirname, python_filename, pyavroc_filename = _create_files()
 
@@ -113,6 +116,7 @@ def test_load_same():
     _delete_files(dirname)
 
 
+@pytest.mark.skipif('sys.version_info >= (3,)', reason='py-avro broken for Python3')
 def test_load_swap_same():
     dirname, python_filename, pyavroc_filename = _create_files()
 

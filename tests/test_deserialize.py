@@ -19,10 +19,15 @@ from cStringIO import StringIO
 
 import avro.schema
 from avro.io import DatumWriter, BinaryEncoder
+
 import pytest
 
-import pyavroc
+try:
+    from cStringIO import StringIO
+except ImportError:
+    from io import StringIO
 
+import pyavroc
 
 SCHEMA = '''{
   "type": "record",
@@ -55,6 +60,7 @@ def test_exc():
         pyavroc.AvroDeserializer('NOT_A_VALID_JSON')
 
 
+@pytest.mark.skipif('sys.version_info >= (3,)', reason='py-avro broken for Python3')
 def test_deserialize_record():
     n_recs = 10
     serializer = Serializer(SCHEMA)
@@ -75,6 +81,7 @@ def test_deserialize_record():
         assert deser_rec.favorite_number is None
 
 
+@pytest.mark.skipif('sys.version_info >= (3,)', reason='py-avro broken for Python3')
 def test_big():
     deserializer = pyavroc.AvroDeserializer(SCHEMA)
     long_str = 'X' * (10 * 1024 * 1024)

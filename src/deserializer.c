@@ -100,7 +100,7 @@ static void
 AvroDeserializer_dealloc(AvroDeserializer *self)
 {
     do_close(self);
-    self->ob_type->tp_free((PyObject*)self);
+    Py_TYPE(self)->tp_free((PyObject*)self);
 }
 
 static PyObject *
@@ -161,8 +161,7 @@ static PyMemberDef AvroDeserializer_members[] = {
 };
 
 PyTypeObject avroDeserializerType = {
-    PyObject_HEAD_INIT(NULL)
-    0,                                     /* ob_size */
+    PyVarObject_HEAD_INIT(NULL, 0)
     "_pyavro.AvroDeserializer",            /* tp_name */
     sizeof(AvroDeserializer),              /* tp_basicsize */
     0,                                     /* tp_itemsize */

@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#include "util.h"
 #include "filewriter.h"
 #include "convert.h"
 #include "structmember.h"
@@ -27,6 +28,7 @@ AvroFileWriter_init(AvroFileWriter *self, PyObject *args, PyObject *kwds)
     int rval;
     PyObject *pyfile;
     PyObject *schema_json;
+    PyObject *schema_json_bytes;
     FILE *file;
 
     self->pyfile = NULL;
@@ -37,7 +39,9 @@ AvroFileWriter_init(AvroFileWriter *self, PyObject *args, PyObject *kwds)
         return -1;
     }
 
-    rval = avro_schema_from_json(PyString_AsString(schema_json), 0, &self->schema, NULL);
+    schema_json_bytes = pystring_to_pybytes(schema_json);
+    rval = avro_schema_from_json(pybytes_to_chars(schema_json_bytes), 0, &self->schema, NULL);
+    Py_DECREF(schema_json_bytes);
 
     if (rval != 0 || self->schema == NULL) {
         PyErr_Format(PyExc_IOError, "Error reading schema: %s", avro_strerror());
@@ -46,7 +50,7 @@ AvroFileWriter_init(AvroFileWriter *self, PyObject *args, PyObject *kwds)
 
     self->flags |= AVROFILE_SCHEMA_OK;
 
-    file = PyFile_AsFile(pyfile);
+    file = pyfile_to_file(pyfile, "wb");
 
     if (file == NULL) {
         PyErr_Format(PyExc_TypeError, "Error accessing file object.  Is it a file or file-like object?");
@@ -113,7 +117,7 @@ AvroFileWriter_dealloc(AvroFileWriter *self)
 {
     do_close(self);
 
-    self->ob_type->tp_free((PyObject*)self);
+    Py_TYPE(self)->tp_free((PyObject*)self);
 }
 
 static PyObject *
@@ -173,8 +177,7 @@ static PyMethodDef AvroFileWriter_methods[] = {
 };
 
 PyTypeObject avroFileWriterType = {
-    PyObject_HEAD_INIT(NULL)
-    0,                         /* ob_size */
+    PyVarObject_HEAD_INIT(NULL, 0)
     "_pyavro.AvroFileWriter",           /* tp_name */
     sizeof(AvroFileWriter), /* tp_basicsize */
     0,                         /* tp_itemsize */

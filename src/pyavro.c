@@ -16,6 +16,7 @@
 
 #include "Python.h"
 
+#include "util.h"
 #include "filereader.h"
 #include "filewriter.h"
 #include "serializer.h"
@@ -29,12 +30,15 @@ create_types_func(PyObject *self, PyObject *args)
     avro_schema_t schema;
     PyObject *schema_json;
     ConvertInfo info;
+    PyObject *schema_json_bytes;
 
     if (!PyArg_ParseTuple(args, "O", &schema_json)) {
         return NULL;
     }
 
-    rval = avro_schema_from_json(PyString_AsString(schema_json), 0, &schema, NULL);
+    schema_json_bytes = pystring_to_pybytes(schema_json);
+    rval = avro_schema_from_json(pybytes_to_chars(schema_json_bytes), 0, &schema, NULL);
+    Py_DECREF(schema_json_bytes);
 
     if (rval != 0 || schema == NULL) {
         PyErr_Format(PyExc_IOError, "Error reading schema: %s", avro_strerror());
@@ -43,7 +47,7 @@ create_types_func(PyObject *self, PyObject *args)
 
     info.types = PyObject_CallFunctionObjArgs((PyObject *)get_avro_types_type(), NULL);
     if (info.types == NULL) {
-        // XXX: is the exception already set?
+        /* XXX: is the exception already set? */
         return NULL;
     }
 
@@ -86,37 +90,61 @@ static PyMethodDef mod_methods[] = {
     {NULL}  /* Sentinel */
 };
 
+#if PY_MAJOR_VERSION >= 3
+static struct PyModuleDef moduledef = {
+        PyModuleDef_HEAD_INIT,
+        "_pyavroc",
+        "Python wrapper around Avro-C",
+        0,
+        mod_methods,
+        NULL,
+        NULL,
+        NULL,
+        NULL
+};
+#endif
 
 #ifndef PyMODINIT_FUNC  /* declarations for DLL import/export */
 #define PyMODINIT_FUNC void
 #endif
+
 PyMODINIT_FUNC
+#if PY_MAJOR_VERSION >= 3
+#define INIT_RETURN(V) return V;
+PyInit__pyavroc(void)
+#else
+#define INIT_RETURN(V) return;
 init_pyavroc(void)
+#endif
 {
     PyObject* m;
 
     avroFileReaderType.tp_new = PyType_GenericNew;
     if (PyType_Ready(&avroFileReaderType) < 0) {
-        return;
+        INIT_RETURN(NULL);
     }
 
     avroFileWriterType.tp_new = PyType_GenericNew;
     if (PyType_Ready(&avroFileWriterType) < 0) {
-        return;
+        INIT_RETURN(NULL);
     }
 
     avroSerializerType.tp_new = PyType_GenericNew;
     if (PyType_Ready(&avroSerializerType) < 0) {
-        return;
+        INIT_RETURN(NULL);
     }
 
     avroDeserializerType.tp_new = PyType_GenericNew;
     if (PyType_Ready(&avroDeserializerType) < 0) {
-        return;
+        INIT_RETURN(NULL);
     }
 
+#if PY_MAJOR_VERSION >= 3
+    m = PyModule_Create(&moduledef);
+#else
     m = Py_InitModule3("_pyavroc", mod_methods,
                        "Python wrapper around Avro-C");
+#endif
 
     Py_INCREF(&avroFileReaderType);
     PyModule_AddObject(m, "AvroFileReader", (PyObject *)&avroFileReaderType);
@@ -132,4 +160,6 @@ init_pyavroc(void)
                        (PyObject *)&avroDeserializerType);
 
     PyModule_AddObject(m, "AvroTypes", (PyObject*)get_avro_types_type());
+
+    INIT_RETURN(m);
 }

@@ -45,7 +45,7 @@ static void
 avro_enum_dealloc(AvroEnum *self)
 {
     PyMem_Free(self->name);
-    self->ob_type->tp_free((PyObject*)self);
+    Py_TYPE(self)->tp_free((PyObject*)self);
 }
 
 static PyObject *
@@ -53,10 +53,10 @@ avro_enum_repr(AvroEnum *self)
 {
     PyObject *result;
 
-    result = PyString_FromString("avtypes.");
-    PyString_ConcatAndDel(&result, PyString_FromString(self->ob_type->tp_name));
-    PyString_ConcatAndDel(&result, PyString_FromString("."));
-    PyString_ConcatAndDel(&result, PyString_FromString(self->name));
+    result = chars_to_pystring("avtypes.");
+    pystring_concat(&result, Py_TYPE(self)->tp_name);
+    pystring_concat(&result, ".");
+    pystring_concat(&result, self->name);
 
     return result;
 }
@@ -69,11 +69,11 @@ avro_enum_reduce(AvroEnum *self, PyObject *args)
 
     result = PyTuple_New(2);
 
-    Py_INCREF(self->ob_type);
-    PyTuple_SET_ITEM(result, 0, (PyObject *)self->ob_type);  /* steals ref */
+    Py_INCREF(Py_TYPE(self));
+    PyTuple_SET_ITEM(result, 0, (PyObject *)Py_TYPE(self));  /* steals ref */
 
     conargs = PyTuple_New(1);
-    PyTuple_SET_ITEM(conargs, 0, PyInt_FromLong(self->value));
+    PyTuple_SET_ITEM(conargs, 0, long_to_pyint(self->value));
     PyTuple_SET_ITEM(result, 1, conargs);  /* steals ref */
 
     return result;
@@ -88,8 +88,8 @@ avro_enum_hash(AvroEnum *self)
 static int
 equal(AvroEnum *a, PyObject *b)
 {
-    if (PyInt_Check(b)) {
-        return (((AvroEnum *)a)->value == PyInt_AsLong(b));
+    if (is_pyint(b)) {
+        return (((AvroEnum *)a)->value == pyint_to_long(b));
     }
 
     /* must be an AvroEnum */
@@ -101,7 +101,7 @@ avro_enum_richcompare(PyObject *a, PyObject *b, int op)
 {
     PyObject *res = Py_NotImplemented;
 
-    if (!PyInt_Check(b) && PyObject_Type(a) != PyObject_Type(b)) {
+    if (!is_pyint(b) && PyObject_Type(a) != PyObject_Type(b)) {
         Py_INCREF(Py_False);
         return Py_False;
     }
@@ -132,8 +132,7 @@ static PyMemberDef avro_enum_members[] = {
 };
 
 static PyTypeObject empty_type_object = {
-    PyObject_HEAD_INIT(NULL)
-    0,                         /* ob_size */
+    PyVarObject_HEAD_INIT(NULL, 0)
     0,                         /* tp_name */
     sizeof(AvroEnum),          /* tp_basicsize */
     0,                         /* tp_itemsize */

@@ -15,13 +15,19 @@
 # limitations under the License.
 
 
-from cStringIO import StringIO
-
-import avro.schema
-from avro.io import DatumReader, BinaryDecoder
+import sys
 import pytest
 
+try:
+    from cStringIO import StringIO
+except ImportError:
+    from io import StringIO
+
 import pyavroc
+
+if sys.version_info < (3,):
+    import avro.schema
+    from avro.io import DatumReader, BinaryDecoder
 
 
 SCHEMA = '''{
@@ -52,6 +58,7 @@ def test_exc():
         pyavroc.AvroSerializer('NOT_A_VALID_JSON')
 
 
+@pytest.mark.skipif('sys.version_info >= (3,)', reason='py-avro broken for Python3')
 def test_serialize_record():
     n_recs = 10
     avtypes = pyavroc.create_types(SCHEMA)
@@ -68,6 +75,7 @@ def test_serialize_record():
         assert deser_rec['favorite_number'] is None
 
 
+@pytest.mark.skipif('sys.version_info >= (3,)', reason='py-avro broken for Python3')
 def test_big():
     avtypes = pyavroc.create_types(SCHEMA)
     serializer = pyavroc.AvroSerializer(SCHEMA)

@@ -95,7 +95,7 @@ static void
 AvroSerializer_dealloc(AvroSerializer *self)
 {
     do_close(self);
-    self->ob_type->tp_free((PyObject*) self);
+    Py_TYPE(self)->tp_free((PyObject*) self);
 }
 
 static PyObject *
@@ -163,8 +163,7 @@ static PyMethodDef AvroSerializer_methods[] = {
 };
 
 PyTypeObject avroSerializerType = {
-    PyObject_HEAD_INIT(NULL)
-    0,                                   /* ob_size */
+    PyVarObject_HEAD_INIT(NULL, 0)
     "_pyavro.AvroSerializer",            /* tp_name */
     sizeof(AvroSerializer),              /* tp_basicsize */
     0,                                   /* tp_itemsize */

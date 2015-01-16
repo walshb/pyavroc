@@ -12,8 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from _version import __version__
-from _pyavroc import (
+from ._version import __version__
+from ._pyavroc import (
     AvroFileReader, AvroFileWriter, AvroSerializer, AvroDeserializer,
     AvroTypes, create_types, validate
 )
