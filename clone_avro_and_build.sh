@@ -58,4 +58,5 @@ python setup.py build
 
 export PYTHONPATH=$(readlink -e build/lib*):$(readlink -e $AVRO/lang/py/build/lib*)
 
-py.test -sv tests
+cd tests
+py.test -sv .
