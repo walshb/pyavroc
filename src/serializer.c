@@ -18,6 +18,7 @@
 #include "convert.h"
 #include "structmember.h"
 #include "error.h"
+#include "util.h"
 
 #define PYAVROC_BUFFER_SIZE (128 * 1024)
 
@@ -95,7 +96,7 @@ static void
 AvroSerializer_dealloc(AvroSerializer *self)
 {
     do_close(self);
-    self->ob_type->tp_free((PyObject*) self);
+    Py_TYPE(self)->tp_free((PyObject*) self);
 }
 
 static PyObject *
@@ -136,8 +137,7 @@ AvroSerializer_serialize(AvroSerializer *self, PyObject *args)
         return NULL;
     }
 
-    serialized = Py_BuildValue("s#", self->buffer,
-                               avro_writer_tell(self->datum_writer));
+    serialized = chars_size_to_pybytes(self->buffer, avro_writer_tell(self->datum_writer));
     avro_writer_reset(self->datum_writer);
     avro_value_decref(&value);
     return serialized;
@@ -163,8 +163,7 @@ static PyMethodDef AvroSerializer_methods[] = {
 };
 
 PyTypeObject avroSerializerType = {
-    PyObject_HEAD_INIT(NULL)
-    0,                                   /* ob_size */
+    PyVarObject_HEAD_INIT(NULL, 0)
     "_pyavro.AvroSerializer",            /* tp_name */
     sizeof(AvroSerializer),              /* tp_basicsize */
     0,                                   /* tp_itemsize */

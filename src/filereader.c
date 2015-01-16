@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#include "util.h"
 #include "filereader.h"
 #include "convert.h"
 #include "structmember.h"
@@ -40,7 +41,7 @@ AvroFileReader_init(AvroFileReader *self, PyObject *args, PyObject *kwds)
         return -1;
     }
 
-    file = PyFile_AsFile(pyfile);
+    file = pyfile_to_file(pyfile, "rb");
 
     if (file == NULL) {
         return -1;
@@ -73,7 +74,7 @@ AvroFileReader_init(AvroFileReader *self, PyObject *args, PyObject *kwds)
         if (!rval) {
             rval = avro_write(schema_json_writer, (void *)"", 1);  /* zero terminate */
             if (!rval) {
-                self->schema_json = PyString_FromString(schema_json);
+                self->schema_json = chars_to_pystring(schema_json);
             }
         }
         avro_writer_free(schema_json_writer);
@@ -117,7 +118,7 @@ static int
 is_open(AvroFileReader *self)
 {
     if (self->pyfile != NULL) {
-        FILE *file = PyFile_AsFile(self->pyfile);
+        FILE *file = pyfile_to_file(self->pyfile, "r");
         return (file != NULL && (self->flags & AVROFILE_READER_OK));
     }
 
@@ -142,7 +143,7 @@ AvroFileReader_dealloc(AvroFileReader *self)
         Py_CLEAR(self->pyfile);
     }
 
-    self->ob_type->tp_free((PyObject*)self);
+    Py_TYPE(self)->tp_free((PyObject*)self);
 }
 
 static PyObject *
@@ -197,10 +198,9 @@ static PyMemberDef AvroFileReader_members[] = {
 };
 
 PyTypeObject avroFileReaderType = {
-    PyObject_HEAD_INIT(NULL)
-    0,                         /* ob_size */
-    "_pyavro.AvroFileReader",           /* tp_name */
-    sizeof(AvroFileReader), /* tp_basicsize */
+    PyVarObject_HEAD_INIT(NULL, 0)
+    "_pyavro.AvroFileReader",  /* tp_name */
+    sizeof(AvroFileReader),    /* tp_basicsize */
     0,                         /* tp_itemsize */
     (destructor)AvroFileReader_dealloc,    /* tp_dealloc */
     0,                         /* tp_print */

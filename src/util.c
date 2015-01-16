@@ -27,3 +27,73 @@ pymem_strdup(const char *str)
     }
     return NULL;
 }
+
+PyObject *pystring_to_pybytes(PyObject *pystr)
+{
+    if (PyUnicode_Check(pystr)) {
+        return PyUnicode_AsUTF8String(pystr);
+    }
+#if PY_MAJOR_VERSION >= 3
+    PyErr_Format(PyExc_TypeError,
+                 "expected Unicode, %.200s found", Py_TYPE(pystr)->tp_name);
+    return NULL;
+#else
+    Py_INCREF(pystr);
+    return pystr;
+#endif
+}
+
+FILE *
+pyfile_to_file(PyObject *pyfile, const char *mode)
+{
+#if PY_MAJOR_VERSION >= 3
+    int fd = PyObject_AsFileDescriptor(pyfile);
+    if (fd < 0) {
+        PyErr_Clear();
+        return NULL;
+    }
+    return fdopen(fd, mode);
+#else
+    return PyFile_AsFile(pyfile);
+#endif
+}
+
+void
+pystring_concat(PyObject **pystr, const char *chars)
+{
+#if PY_MAJOR_VERSION >= 3
+    PyObject *newstr = PyUnicode_Concat(*pystr, PyUnicode_FromString(chars));
+    Py_DECREF(*pystr);
+    *pystr = newstr;
+#else
+    PyString_ConcatAndDel(pystr, PyString_FromString(chars));
+#endif
+}
+
+void
+pystring_concat_repr(PyObject **pystr, PyObject *obj)
+{
+#if PY_MAJOR_VERSION >= 3
+    PyObject *repr = PyObject_Repr(obj);
+    PyObject *newstr = PyUnicode_Concat(*pystr, repr);
+    Py_DECREF(repr);
+    Py_DECREF(*pystr);
+    *pystr = newstr;
+#else
+    PyString_ConcatAndDel(pystr, PyObject_Repr(obj));
+#endif
+}
+
+void
+pystring_concat_str(PyObject **pystr, PyObject *obj)
+{
+#if PY_MAJOR_VERSION >= 3
+    PyObject *repr = PyObject_Str(obj);
+    PyObject *newstr = PyUnicode_Concat(*pystr, repr);
+    Py_DECREF(repr);
+    Py_DECREF(*pystr);
+    *pystr = newstr;
+#else
+    PyString_ConcatAndDel(pystr, PyObject_Str(obj));
+#endif
+}

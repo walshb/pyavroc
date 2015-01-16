@@ -17,6 +17,7 @@
 
 import sys
 import os
+import pytest
 import shutil
 import tempfile
 
@@ -41,13 +42,16 @@ json_schema = '''{"namespace": "example.avro",
 
 
 def _python_create_file(filename):
-    schema = avro.schema.parse(json_schema)
+    if sys.version_info >= (3,):
+        schema = avro.schema.Parse(json_schema)
+    else:
+        schema = avro.schema.parse(json_schema)
 
-    fp = open(filename, 'w')
+    fp = open(filename, 'wb')
 
     writer = avro.datafile.DataFileWriter(fp, avro.io.DatumWriter(), schema)
 
-    for i in xrange(1):
+    for i in range(1):
         writer.append({"name": "Alyssa", "favorite_number": 256})
         writer.append({"name": "Ben", "favorite_number": 7, "favorite_color": "red"})
 
@@ -63,7 +67,7 @@ def _pyavroc_create_file(filename):
 
     writer = pyavroc.AvroFileWriter(fp, json_schema)
 
-    for i in xrange(1):
+    for i in range(1):
         writer.write(avtypes.User(name='Alyssa', favorite_number=256))
         writer.write(avtypes.User(name='Ben', favorite_number=7, favorite_color='red'))
 
@@ -89,7 +93,7 @@ def _delete_files(dirname):
 
 
 def _python_read(filename):
-    fp = avro.datafile.DataFileReader(open(filename), avro.io.DatumReader())
+    fp = avro.datafile.DataFileReader(open(filename, 'rb'), avro.io.DatumReader())
 
     return list(fp)
 

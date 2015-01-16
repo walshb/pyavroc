@@ -14,15 +14,23 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import sys
+
 import json
-from cStringIO import StringIO
 
 import avro.schema
 from avro.io import DatumWriter, BinaryEncoder
+
 import pytest
 
-import pyavroc
+if sys.version_info < (3,):
+    from cStringIO import StringIO
+    string_io = StringIO
+else:
+    from io import BytesIO
+    string_io = BytesIO
 
+import pyavroc
 
 SCHEMA = '''{
   "type": "record",
@@ -38,11 +46,14 @@ SCHEMA = '''{
 class Serializer(object):
 
     def __init__(self, schema_str):
-        schema = avro.schema.parse(schema_str)
+        if sys.version_info >= (3,):
+            schema = avro.schema.Parse(schema_str)
+        else:
+            schema = avro.schema.parse(schema_str)
         self.writer = DatumWriter(schema)
 
     def serialize(self, record):
-        f = StringIO()
+        f = string_io()
         encoder = BinaryEncoder(f)
         self.writer.write(record, encoder)
         return f.getvalue()
@@ -60,7 +71,7 @@ def test_deserialize_record():
     serializer = Serializer(SCHEMA)
     deserializer = pyavroc.AvroDeserializer(SCHEMA)
     obj_deserializer = pyavroc.AvroDeserializer(SCHEMA, types=True)
-    for i in xrange(n_recs):
+    for i in range(n_recs):
         name, office = "name-%d" % i, "office-%d" % i
         record = {'name': name, 'office': office}
         rec_bytes = serializer.serialize(record)

@@ -131,11 +131,3 @@ def test_enum_as_key():
     assert avtypes.Color.GREEN in d
     assert avtypes.Color.BLUE not in d
     assert d[avtypes.Color.GREEN] == 'a'
-
-
-if __name__ == '__main__':
-    ##test_enum_as_key()
-    ##ac = avtypes.Color.BLUE
-    print 'setting avtypes = None'
-    avtypes = None
-    ##print sys.getrefcount(ac)

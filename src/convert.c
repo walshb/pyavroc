@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#include "util.h"
 #include "convert.h"
 #include "record.h"
 #include "avroenum.h"
@@ -49,14 +50,27 @@ declare_types(ConvertInfo *info, avro_schema_t schema)
     case AVRO_BOOLEAN:
         return (PyObject *)&PyBool_Type;
     case AVRO_BYTES:
+#if PY_MAJOR_VERSION >= 3
+        return (PyObject *)&PyBytes_Type;
+#else
+        return (PyObject *)&PyString_Type;
+#endif
     case AVRO_STRING:
     case AVRO_FIXED:
+#if PY_MAJOR_VERSION >= 3
+        return (PyObject *)&PyUnicode_Type;
+#else
         return (PyObject *)&PyString_Type;
+#endif
     case AVRO_DOUBLE:
     case AVRO_FLOAT:
         return (PyObject *)&PyFloat_Type;
     case AVRO_INT32:
+#if PY_MAJOR_VERSION >= 3
+        return (PyObject *)&PyLong_Type;
+#else
         return (PyObject *)&PyInt_Type;
+#endif
     case AVRO_ENUM:
         return get_python_enum_type(info->types, schema);
     case AVRO_INT64:
@@ -138,11 +152,22 @@ static PyObject *
 enum_to_python(ConvertInfo *info, avro_value_t *value)
 {
     int  val;
+    const char *name;
     avro_schema_t schema;
 
     avro_value_get_enum(value, &val);
+
     schema = avro_value_get_schema(value);
-    return PyString_FromString(avro_schema_enum_get(schema, val));
+
+    name = avro_schema_enum_get(schema, val);
+
+    if (name == NULL) {
+        PyErr_SetString(PyExc_ValueError, "Enum value out of range");
+        /* enum value out of range */
+        return NULL;
+    }
+
+    return chars_to_pystring(name);
 }
 
 static PyObject *
@@ -159,7 +184,7 @@ enum_to_python_object(ConvertInfo *info, avro_value_t *value)
 
     PyObject *obj = PyObject_GetAttrString(type, name);
 
-    return obj;
+    return (PyObject *)obj;
 }
 
 static PyObject *
@@ -179,7 +204,7 @@ record_to_python(ConvertInfo *info, avro_value_t *value)
 
         avro_value_get_by_index(value, i, &field_value, &field_name);
 
-        pykey = (PyObject *)PyString_FromString(field_name);
+        pykey = (PyObject *)chars_to_pystring(field_name);
         pyelement_value = avro_to_python(info, &field_value);
 
         /* increfs key and value */
@@ -238,7 +263,7 @@ map_to_python(ConvertInfo *info, avro_value_t *value)
 
         avro_value_get_by_index(value, i, &element_value, &key);
 
-        pykey = (PyObject *)PyString_FromString(key);
+        pykey = (PyObject *)chars_to_pystring(key);
         pyelement_value = avro_to_python(info, &element_value);
 
         /* increfs key and value */
@@ -279,7 +304,7 @@ avro_to_python(ConvertInfo *info, avro_value_t *value)
             size_t  size;
             avro_value_get_bytes(value, &buf, &size);
             /* got pointer into underlying value. no need to free */
-            return PyString_FromStringAndSize(buf, size);
+            return chars_size_to_pybytes(buf, size);
         }
 
     case AVRO_DOUBLE:
@@ -300,7 +325,7 @@ avro_to_python(ConvertInfo *info, avro_value_t *value)
         {
             int32_t  val;
             avro_value_get_int(value, &val);
-            return PyInt_FromLong(val);
+            return long_to_pyint(val);
         }
 
     case AVRO_INT64:
@@ -325,7 +350,7 @@ avro_to_python(ConvertInfo *info, avro_value_t *value)
             size_t  size;
             avro_value_get_string(value, &buf, &size);
             /* For strings, size includes the NUL terminator. */
-            return PyString_FromStringAndSize(buf, size - 1);
+            return chars_size_to_pystring(buf, size - 1);
         }
 
     case AVRO_ARRAY:
@@ -345,7 +370,7 @@ avro_to_python(ConvertInfo *info, avro_value_t *value)
             const void  *buf;
             size_t  size;
             avro_value_get_fixed(value, &buf, &size);
-            return PyString_FromStringAndSize((const char *)buf, size);
+            return chars_size_to_pystring((const char *)buf, size);
         }
 
     case AVRO_MAP:
@@ -413,16 +438,19 @@ python_to_map(ConvertInfo *info, PyObject *pyobj, avro_value_t *dest)
     vals = PyMapping_Values(pyobj);
 
     for (i = 0; !rval && i < element_count; i++) {
-        PyObject *key = PySequence_GetItem(keys, i);
+        PyObject *pykey = PySequence_GetItem(keys, i);
         PyObject *val = PySequence_GetItem(vals, i);
         avro_value_t child;
 
-        rval = avro_value_add(dest, PyString_AsString(key), &child, NULL, NULL);
+        PyObject *key_bytes = pystring_to_pybytes(pykey);
+        rval = avro_value_add(dest, pybytes_to_chars(key_bytes), &child, NULL, NULL);
+        Py_DECREF(key_bytes);
+
         if (!rval) {
             rval = python_to_avro(info, val, &child);
         }
 
-        Py_DECREF(key);
+        Py_DECREF(pykey);
         Py_DECREF(val);
     }
 
@@ -445,7 +473,7 @@ get_branch_index(ConvertInfo *info, PyObject *pyobj, avro_schema_t schema)
     if (pyobj == Py_None) {
         typename = "null";
     } else {
-        if (PyString_CheckExact(pyobj) || PyUnicode_CheckExact(pyobj)) {
+        if (is_pystring(pyobj)) {
             typename = "string";
         } else if (PyList_CheckExact(pyobj)) {
             typename = "array";
@@ -465,7 +493,7 @@ get_branch_index(ConvertInfo *info, PyObject *pyobj, avro_schema_t schema)
                                                              &branch_index,
                                                              "double");
         }
-        else if (PyInt_CheckExact(pyobj)) { /* may also be Python int vs long */
+        else if (is_pyint(pyobj)) { /* may also be Python int vs long */
             branch_schema = avro_schema_union_branch_by_name(schema,
                                                              &branch_index,
                                                              "long");
@@ -495,28 +523,29 @@ validate(PyObject *pyobj, avro_schema_t schema) {
     case AVRO_BOOLEAN:
         return PyBool_Check(pyobj) ? 0 : -1;
     case AVRO_BYTES:
-        return PyString_Check(pyobj) ? 0 : -1;
+        return is_pybytes(pyobj) ? 0 : -1;
     case AVRO_STRING:
-        return (PyString_Check(pyobj) || PyUnicode_Check(pyobj)) ? 0 : -1;
+        return is_pystring(pyobj) ? 0 : -1;
     case AVRO_INT32:
     case AVRO_INT64:
         /* FIXME: discriminate by comparing value to 32/64 bit limits */
-        return (PyInt_Check(pyobj) || PyLong_Check(pyobj)) ? 0 : -1;
+        return (is_pyint(pyobj) || PyLong_Check(pyobj)) ? 0 : -1;
     case AVRO_FLOAT:
     case AVRO_DOUBLE:
-        return (PyInt_Check(pyobj) || PyLong_Check(pyobj) ||
+        return (is_pyint(pyobj) || PyLong_Check(pyobj) ||
                 PyFloat_Check(pyobj)) ? 0 : -1;
     case AVRO_FIXED:
         /* FIXME: check that string size == expected size */
-        return PyString_Check(pyobj) ? 0 : -1;
+        return is_pystring(pyobj) ? 0 : -1;
     case AVRO_ENUM:
         {
-            if (PyString_Check(pyobj)) {
-                return avro_schema_enum_get_by_name(
-                  schema, PyString_AsString(pyobj)
-                );
-            } else if (PyInt_Check(pyobj) || PyLong_Check(pyobj)) {
-                int index = PyInt_AsLong(pyobj);
+            if (is_pystring(pyobj)) {
+                PyObject *pybytes = pystring_to_pybytes(pyobj);
+                int res = avro_schema_enum_get_by_name(schema, pybytes_to_chars(pybytes));
+                Py_DECREF(pybytes);
+                return res;
+            } else if (is_pyint(pyobj)) {
+                int index = pyint_to_long(pyobj);
                 int size = avro_schema_enum_number_of_symbols(schema);
                 return (index >= 0 && index < size) ? index : -1;
             } else {
@@ -540,10 +569,9 @@ validate(PyObject *pyobj, avro_schema_t schema) {
             Py_ssize_t pos = 0;
             if (!PyDict_Check(pyobj)) return -1;
             while (PyDict_Next(pyobj, &pos, &key, &value)) {
-                if (!(PyString_Check(key) || PyUnicode_Check(key)))
+                if (!is_pystring(key) || validate(value, subschema) < 0) {
                     return -1;
-                if (validate(value, subschema) < 0)
-                    return -1;
+                }
             }
             return 0;
         }
@@ -663,7 +691,7 @@ python_to_avro(ConvertInfo *info, PyObject *pyobj, avro_value_t *dest)
         {
             char *buf;
             Py_ssize_t len;
-            if (PyString_AsStringAndSize(pyobj, &buf, &len) < 0) {
+            if (pybytes_to_chars_size(pyobj, &buf, &len) < 0) {
                 return set_type_error(EINVAL, pyobj);
             }
             /* we're holding internal data so use "set" not "give" */
@@ -687,7 +715,7 @@ python_to_avro(ConvertInfo *info, PyObject *pyobj, avro_value_t *dest)
         }
     case AVRO_INT32:
         {
-            long retval = PyInt_AsLong(pyobj);
+            long retval = pyint_to_long(pyobj);
             if (retval == -1L && PyErr_Occurred()) {
                 return set_type_error(EINVAL, pyobj);
             }
@@ -707,9 +735,12 @@ python_to_avro(ConvertInfo *info, PyObject *pyobj, avro_value_t *dest)
         {
             char *buf;
             Py_ssize_t len;
-            if (PyString_AsStringAndSize(pyobj, &buf, &len) < 0) {
+            PyObject *pybytes = pystring_to_pybytes(pyobj);
+            if (pybytes == NULL || pybytes_to_chars_size(pybytes, &buf, &len) < 0) {
+                Py_XDECREF(pybytes);
                 return set_type_error(EINVAL, pyobj);
             }
+            Py_DECREF(pybytes);
             return set_avro_error(avro_value_set_string_len(dest, buf, len + 1));
         }
     case AVRO_ARRAY:
@@ -726,10 +757,13 @@ python_to_avro(ConvertInfo *info, PyObject *pyobj, avro_value_t *dest)
         {
             char *buf;
             Py_ssize_t len;
-            if (PyString_AsStringAndSize(pyobj, &buf, &len) < 0) {
+            PyObject *pybytes = pystring_to_pybytes(pyobj);
+            if (pybytes == NULL || pybytes_to_chars_size(pybytes, &buf, &len) < 0) {
+                Py_XDECREF(pybytes);
                 return set_type_error(EINVAL, pyobj);
             }
-            return set_avro_error(avro_value_set_fixed(dest, buf, len));
+            Py_DECREF(pybytes);
+            return avro_value_set_fixed(dest, buf, len);
         }
     case AVRO_MAP:
         return python_to_map(info, pyobj, dest);

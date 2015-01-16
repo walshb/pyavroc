@@ -15,6 +15,7 @@
  */
 
 #include "record.h"
+#include "util.h"
 #include "structmember.h"
 
 static int
@@ -26,7 +27,7 @@ avro_record_init(AvroRecord *self, PyObject *args, PyObject *kwds)
     PyObject *vals;
     PyObject *key;
     PyObject *val;
-    size_t basicsize = self->ob_type->tp_basicsize;
+    size_t basicsize = Py_TYPE(self)->tp_basicsize;
     size_t nfields = (basicsize - sizeof(AvroRecord)) / sizeof(PyObject *);
     int rc = 0;
 
@@ -66,36 +67,36 @@ static void
 avro_record_dealloc(AvroRecord *self)
 {
     size_t i;
-    size_t basicsize = self->ob_type->tp_basicsize;
+    size_t basicsize = Py_TYPE(self)->tp_basicsize;
     size_t nfields = (basicsize - sizeof(AvroRecord)) / sizeof(PyObject *);
 
     for (i = 0; i < nfields; i++) {
         Py_CLEAR(self->fields[i]);
     }
 
-    self->ob_type->tp_free((PyObject*)self);
+    Py_TYPE(self)->tp_free((PyObject*)self);
 }
 
 static PyObject *
 avro_record_repr(AvroRecord *self)
 {
     size_t i;
-    size_t basicsize = self->ob_type->tp_basicsize;
+    size_t basicsize = Py_TYPE(self)->tp_basicsize;
     size_t nfields = (basicsize - sizeof(AvroRecord)) / sizeof(PyObject *);
     PyObject *result;
 
-    result = PyString_FromString("avtypes.");
-    PyString_ConcatAndDel(&result, PyString_FromString(self->ob_type->tp_name));
-    PyString_ConcatAndDel(&result, PyString_FromString("("));
+    result = chars_to_pystring("avtypes.");
+    pystring_concat(&result, Py_TYPE(self)->tp_name);
+    pystring_concat(&result, "(");
     for (i = 0; i < nfields; i++) {
         if (i > 0) {
-            PyString_ConcatAndDel(&result, PyString_FromString(", "));
+            pystring_concat(&result, ", ");
         }
-        PyString_ConcatAndDel(&result, PyString_FromString(self->ob_type->tp_members[i].name));
-        PyString_ConcatAndDel(&result, PyString_FromString("="));
-        PyString_ConcatAndDel(&result, PyObject_Repr(self->fields[i]));
+        pystring_concat(&result, Py_TYPE(self)->tp_members[i].name);
+        pystring_concat(&result, "=");
+        pystring_concat_repr(&result, self->fields[i]);
     }
-    PyString_ConcatAndDel(&result, PyString_FromString(")"));
+    pystring_concat(&result, ")");
 
     return result;
 }
@@ -104,15 +105,15 @@ static PyObject *
 avro_record_reduce(AvroRecord *self, PyObject *args)
 {
     size_t i;
-    size_t basicsize = self->ob_type->tp_basicsize;
+    size_t basicsize = Py_TYPE(self)->tp_basicsize;
     size_t nfields = (basicsize - sizeof(AvroRecord)) / sizeof(PyObject *);
     PyObject *result;
     PyObject *conargs;
 
     result = PyTuple_New(2);
 
-    Py_INCREF(self->ob_type);
-    PyTuple_SET_ITEM(result, 0, (PyObject *)self->ob_type);  /* steals ref */
+    Py_INCREF(Py_TYPE(self));
+    PyTuple_SET_ITEM(result, 0, (PyObject *)Py_TYPE(self));  /* steals ref */
 
     conargs = PyTuple_New(nfields);
     for (i = 0; i < nfields; i++) {
@@ -136,7 +137,7 @@ equal(AvroRecord *a, AvroRecord *b)
     size_t basicsize;
     size_t nfields;
 
-    basicsize = a->ob_type->tp_basicsize;
+    basicsize = Py_TYPE(a)->tp_basicsize;
     nfields = (basicsize - sizeof(AvroRecord)) / sizeof(PyObject *);
 
     for (i = 0; i < nfields; i++) {
@@ -189,8 +190,7 @@ static PyMethodDef avro_record_methods[] = {
 };
 
 static PyTypeObject empty_type_object = {
-    PyObject_HEAD_INIT(NULL)
-    0,                         /* ob_size */
+    PyVarObject_HEAD_INIT(NULL, 0)
     0,                         /* tp_name */
     0,                         /* tp_basicsize */
     0,                         /* tp_itemsize */

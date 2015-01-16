@@ -19,6 +19,7 @@ import sys
 import os
 import shutil
 import tempfile
+import re
 
 import pytest
 
@@ -97,8 +98,11 @@ def test_write_wrong_value():
 
     expected_error = "when writing to Rec1.attr1, invalid python object '" \
                      + ('x' * 99) + ", an integer is required"
+    expected_error2 = "when writing to Rec1.attr1, invalid python object '" \
+                      + ('x' * 120) + "', an integer is required"
 
-    assert expected_error in str(excinfo.value)
+    assert expected_error in str(excinfo.value) \
+        or expected_error2 in str(excinfo.value)
 
     with pytest.raises(TypeError) as excinfo:
         with open(filename, 'w') as fp:
@@ -107,9 +111,9 @@ def test_write_wrong_value():
             writer.close()
 
     expected_error = "when writing to Rec2.attr2, invalid python object 123," \
-                     " expected string or Unicode object, int found"
+                     " expected.*Unicode.*, int found"
 
-    assert expected_error in str(excinfo.value)
+    assert re.search(expected_error, str(excinfo.value))
 
     shutil.rmtree(dirname)
 

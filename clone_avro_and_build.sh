@@ -49,11 +49,21 @@ then
     [ $STATIC -eq 0 ] || rm -f $AVRO/dist/lib/libavro.so*
 fi
 
+PYTHON=${PYTHON:-python}
+
 # build avro python
 
-cd $AVRO/lang/py
+case $($PYTHON -c 'import sys; print(sys.version_info.major)') in
+    3) AVROPY=$AVRO/lang/py3
+        ;;
+    *) AVROPY=$AVRO/lang/py
+       ;;
+esac
 
-python setup.py build
+cd $AVROPY
+
+rm -rf build
+$PYTHON setup.py build
 
 # build pyavroc
 
@@ -71,9 +81,15 @@ else
     export LDFLAGS="-L$AVRO/dist/lib -Wl,-rpath,$AVRO/dist/lib"
 fi
 
-python setup.py build
+$PYTHON setup.py build
 
-export PYTHONPATH=$(readlink -e build/lib*):$(readlink -e $AVRO/lang/py/build/lib*)
+cd build/lib*/pyavroc
+[ -f _pyavroc.so ] || ln -s _pyavroc.*.so _pyavroc.so
+
+cd $MYDIR
+
+export PYTHONPATH=$(readlink -e build/lib*):$(readlink -e $AVROPY/build/lib*)
 
 cd tests
-py.test -sv .
+
+$PYTHON -m pytest -sv .

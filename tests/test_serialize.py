@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
 # Copyright 2015 CRS4
 #
@@ -15,13 +16,20 @@
 # limitations under the License.
 
 
-from cStringIO import StringIO
+import sys
+import pytest
+
+if sys.version_info < (3,):
+    from cStringIO import StringIO
+    string_io = StringIO
+else:
+    from io import BytesIO
+    string_io = BytesIO
+
+import pyavroc
 
 import avro.schema
 from avro.io import DatumReader, BinaryDecoder
-import pytest
-
-import pyavroc
 
 
 SCHEMA = '''{
@@ -38,11 +46,14 @@ SCHEMA = '''{
 class Deserializer(object):
 
     def __init__(self, schema_str):
-        schema = avro.schema.parse(schema_str)
+        if sys.version_info >= (3,):
+            schema = avro.schema.Parse(schema_str)
+        else:
+            schema = avro.schema.parse(schema_str)
         self.reader = DatumReader(schema)
 
     def deserialize(self, rec_bytes):
-        return self.reader.read(BinaryDecoder(StringIO(rec_bytes)))
+        return self.reader.read(BinaryDecoder(string_io(rec_bytes)))
 
 
 def test_exc():
@@ -57,7 +68,7 @@ def test_serialize_record():
     avtypes = pyavroc.create_types(SCHEMA)
     serializer = pyavroc.AvroSerializer(SCHEMA)
     deserializer = Deserializer(SCHEMA)
-    for i in xrange(n_recs):
+    for i in range(n_recs):
         name, office = "name-%d" % i, "office-%d" % i
         avro_obj = avtypes.User(name=name, office=office)
         rec_bytes = serializer.serialize(avro_obj)
@@ -94,3 +105,18 @@ def test_unicode_map_keys():
     serializer = pyavroc.AvroSerializer(schema)
     rec_bytes = serializer.serialize({"bar": {"k": "v"}})
     assert serializer.serialize({"bar": {u"k": "v"}}) == rec_bytes
+
+
+def test_serialize_utf8_string():
+    schema = '["string"]'
+    serializer = pyavroc.AvroSerializer(schema)
+    deserializer = Deserializer(schema)
+
+    if sys.version_info < (3,):
+        datum = "barà"
+        rec_bytes = serializer.serialize(datum)
+        assert deserializer.deserialize(rec_bytes) == unicode(datum, "utf-8")
+
+    datum = u"barà"
+    rec_bytes = serializer.serialize(datum)
+    assert deserializer.deserialize(rec_bytes) == datum
