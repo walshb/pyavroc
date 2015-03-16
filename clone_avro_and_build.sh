@@ -60,7 +60,7 @@ cd $MYDIR
 rm -rf build dist
 
 export PYAVROC_CFLAGS="-I$AVRO/dist/include"
-export PYAVROC_LIBS="z"
+export PYAVROC_LIBS="z,lzma"
 export LDFLAGS="-L$AVRO/dist/lib"
 
 python setup.py build
