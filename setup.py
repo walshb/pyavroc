@@ -27,6 +27,8 @@ cflags = os.environ.get('PYAVROC_CFLAGS', None)
 if cflags:
     os.environ['CFLAGS'] = os.environ.get('CFLAGS', '') + ' ' + cflags
 
+extra_libs = os.environ.get('PYAVROC_LIBS', '').split()
+
 ext_modules = [Extension('pyavroc/_pyavroc',
                          ['src/pyavro.c',
                           'src/filereader.c',
@@ -35,7 +37,7 @@ ext_modules = [Extension('pyavroc/_pyavroc',
                           'src/record.c',
                           'src/avroenum.c',
                           'src/util.c'],
-                         libraries=['avro'])]
+                         libraries=['avro'] + extra_libs)]
 
 setup(name='pyavroc',
       version=version,
