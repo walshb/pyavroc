@@ -1,2 +1,5 @@
 language: python
+addons:
+  apt-packages:
+  - zlib1g-dev
 script: "./clone_avro_and_build.sh"
