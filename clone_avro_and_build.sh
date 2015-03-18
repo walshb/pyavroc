@@ -60,7 +60,8 @@ cd $MYDIR
 rm -rf build dist
 
 export PYAVROC_CFLAGS="-I$AVRO/dist/include"
-export PYAVROC_LIBS="z,lzma"
+# a bit cheesy: get libraries from the cmake link.txt file
+export PYAVROC_LIBS=$(tr ' ' '\n' <$AVRO/build/src/CMakeFiles/avro-shared.dir/link.txt | grep '^-l' | cut -c3-)
 export LDFLAGS="-L$AVRO/dist/lib"
 
 python setup.py build
