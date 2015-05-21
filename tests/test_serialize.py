@@ -34,6 +34,7 @@ class Deserializer(object):
 
 
 def test_serialize_record():
+    n_recs = 10
     schema = '''{
       "type": "record",
       "name": "User",
@@ -43,15 +44,14 @@ def test_serialize_record():
         {"name": "favorite_number",  "type": ["int", "null"]}
       ]
     }'''
-    deserializer = Deserializer(schema)
-    name, office = "John Doe", "Marketing"
-
     avtypes = pyavroc.create_types(schema)
-    avro_obj = avtypes.User(name=name, office=office)
-    rec_bytes = pyavroc.serialize(avro_obj, schema)
-    deser_rec = deserializer.deserialize(rec_bytes)
-
-    assert set(deser_rec) == set(['name', 'office', 'favorite_number'])
-    assert deser_rec['name'] == name
-    assert deser_rec['office'] == office
-    assert deser_rec['favorite_number'] is None
+    deserializer = Deserializer(schema)
+    for i in xrange(n_recs):
+        name, office = "name-%d" % i, "office-%d" % i
+        avro_obj = avtypes.User(name=name, office=office)
+        rec_bytes = pyavroc.serialize(avro_obj, schema)
+        deser_rec = deserializer.deserialize(rec_bytes)
+        assert set(deser_rec) == set(['name', 'office', 'favorite_number'])
+        assert deser_rec['name'] == name
+        assert deser_rec['office'] == office
+        assert deser_rec['favorite_number'] is None
