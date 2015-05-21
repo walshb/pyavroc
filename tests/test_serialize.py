@@ -45,11 +45,12 @@ def test_serialize_record():
       ]
     }'''
     avtypes = pyavroc.create_types(schema)
+    serializer = pyavroc.AvroSerializer(schema)
     deserializer = Deserializer(schema)
     for i in xrange(n_recs):
         name, office = "name-%d" % i, "office-%d" % i
         avro_obj = avtypes.User(name=name, office=office)
-        rec_bytes = pyavroc.serialize(avro_obj, schema)
+        rec_bytes = serializer.serialize(avro_obj)
         deser_rec = deserializer.deserialize(rec_bytes)
         assert set(deser_rec) == set(['name', 'office', 'favorite_number'])
         assert deser_rec['name'] == name

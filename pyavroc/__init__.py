@@ -13,4 +13,6 @@
 # limitations under the License.
 
 from _version import __version__
-from _pyavroc import AvroFileReader, AvroFileWriter, AvroTypes, create_types, serialize
+from _pyavroc import (
+    AvroFileReader, AvroFileWriter, AvroSerializer, AvroTypes, create_types
+)
