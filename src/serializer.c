@@ -25,16 +25,16 @@ static int
 AvroSerializer_init(AvroSerializer *self, PyObject *args, PyObject *kwds)
 {
     int rval;
-    PyObject *schema_json;
+    const char *schema_json;
 
     self->flags = 0;
     self->iface = NULL;
 
-    if (!PyArg_ParseTuple(args, "O", &schema_json)) {
+    if (!PyArg_ParseTuple(args, "s", &schema_json)) {
         return -1;
     }
 
-    rval = avro_schema_from_json(PyString_AsString(schema_json),
+    rval = avro_schema_from_json(schema_json,
                                  0, &self->schema, NULL);
     if (rval != 0 || self->schema == NULL) {
         PyErr_Format(PyExc_IOError, "Error reading schema: %s",
