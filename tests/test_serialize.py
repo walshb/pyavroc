@@ -19,6 +19,7 @@ from cStringIO import StringIO
 
 import avro.schema
 from avro.io import DatumReader, BinaryDecoder
+import pytest
 
 import pyavroc
 
@@ -31,6 +32,11 @@ class Deserializer(object):
 
     def deserialize(self, rec_bytes):
         return self.reader.read(BinaryDecoder(StringIO(rec_bytes)))
+
+
+def test_exc():
+    with pytest.raises(IOError):
+        pyavroc.AvroSerializer('NOT_A_VALID_JSON')
 
 
 def test_serialize_record():
