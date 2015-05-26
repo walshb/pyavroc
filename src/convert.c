@@ -443,11 +443,18 @@ get_branch_index(ConvertInfo *info, PyObject *pyobj, avro_schema_t schema)
     branch_schema = avro_schema_union_branch_by_name(schema,
                                                      &branch_index,
                                                      typename);
-    /* maybe Python "float" vs avro "double" */
-    if (branch_schema == NULL && PyFloat_CheckExact(pyobj)) {
-        branch_schema = avro_schema_union_branch_by_name(schema,
-                                                         &branch_index,
-                                                         "double");
+    if (branch_schema == NULL) {
+        /* maybe Python "float" vs avro "double" */
+        if (PyFloat_CheckExact(pyobj)) {
+            branch_schema = avro_schema_union_branch_by_name(schema,
+                                                             &branch_index,
+                                                             "double");
+        }
+        else if (PyInt_CheckExact(pyobj)) { /* may also be Python int vs long */
+            branch_schema = avro_schema_union_branch_by_name(schema,
+                                                             &branch_index,
+                                                             "long");
+        }
     }
 
     if (branch_schema == NULL) {

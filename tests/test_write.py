@@ -99,3 +99,24 @@ def test_write_read_empty():
     assert len(read_recs) == 0
 
     shutil.rmtree(dirname)
+
+def test_coerce_int_long_in_unions():
+    schema = ''' [ "null", "long"] '''
+
+    with open('/dev/null', 'w') as fp:
+        writer = pyavroc.AvroFileWriter(fp, schema)
+        writer.write(33) # an integer.  Should be coerced to long without an error
+        writer.close()
+
+def test_coerce_int_long():
+    schema = '''{
+        "type": "record",
+        "name": "Rec",
+        "fields": [ {"name": "attr1", "type": "long"} ]
+        }'''
+    av_types = pyavroc.create_types(schema)
+    rec = av_types.Rec(attr1=33) # an integer.  Should be coerced to long without an error
+    with open('/dev/null', 'w') as fp:
+        writer = pyavroc.AvroFileWriter(fp, schema)
+        writer.write(rec)
+        writer.close()
