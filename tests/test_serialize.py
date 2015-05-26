@@ -24,6 +24,17 @@ import pytest
 import pyavroc
 
 
+SCHEMA = '''{
+  "type": "record",
+  "name": "User",
+  "fields": [
+    {"name": "office", "type": "string"},
+    {"name": "name", "type": "string"},
+    {"name": "favorite_number",  "type": ["int", "null"]}
+  ]
+}'''
+
+
 class Deserializer(object):
 
     def __init__(self, schema_str):
@@ -41,18 +52,9 @@ def test_exc():
 
 def test_serialize_record():
     n_recs = 10
-    schema = '''{
-      "type": "record",
-      "name": "User",
-      "fields": [
-        {"name": "office", "type": "string"},
-        {"name": "name", "type": "string"},
-        {"name": "favorite_number",  "type": ["int", "null"]}
-      ]
-    }'''
-    avtypes = pyavroc.create_types(schema)
-    serializer = pyavroc.AvroSerializer(schema)
-    deserializer = Deserializer(schema)
+    avtypes = pyavroc.create_types(SCHEMA)
+    serializer = pyavroc.AvroSerializer(SCHEMA)
+    deserializer = Deserializer(SCHEMA)
     for i in xrange(n_recs):
         name, office = "name-%d" % i, "office-%d" % i
         avro_obj = avtypes.User(name=name, office=office)
@@ -62,3 +64,11 @@ def test_serialize_record():
         assert deser_rec['name'] == name
         assert deser_rec['office'] == office
         assert deser_rec['favorite_number'] is None
+
+
+def test_big():
+    avtypes = pyavroc.create_types(SCHEMA)
+    serializer = pyavroc.AvroSerializer(SCHEMA)
+    long_str = 'X' * (10 * 1024 * 1024)
+    avro_obj = avtypes.User(name=long_str, office=long_str)
+    serializer.serialize(avro_obj)

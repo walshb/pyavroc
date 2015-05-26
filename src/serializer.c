@@ -18,7 +18,6 @@
 #include "convert.h"
 #include "structmember.h"
 
-/* FIXME */
 #define PYAVROC_BUFFER_SIZE (128 * 1024)
 
 
@@ -51,7 +50,7 @@ AvroSerializer_init(AvroSerializer *self, PyObject *args, PyObject *kwds)
         return -1;
     }
 
-    self->buffer_size = PYAVROC_BUFFER_SIZE;  /* FIXME */
+    self->buffer_size = PYAVROC_BUFFER_SIZE;  /* Initial size */
     self->buffer = (char *) avro_malloc(self->buffer_size);
     if (!self->buffer) {
         PyErr_NoMemory();
@@ -103,6 +102,7 @@ static PyObject *
 AvroSerializer_serialize(AvroSerializer *self, PyObject *args)
 {
     int rval;
+    size_t new_size;
     avro_value_t value;
     PyObject *pyvalue;
     PyObject *serialized;
@@ -115,11 +115,33 @@ AvroSerializer_serialize(AvroSerializer *self, PyObject *args)
     if (!rval) {
         rval = avro_value_write(self->datum_writer, &value);
     }
+
+    while(rval == ENOSPC) {
+        new_size = self->buffer_size * 2;
+        self->buffer = (char*) avro_realloc(
+            self->buffer, self->buffer_size, new_size);
+        if (!self->buffer) {
+            PyErr_NoMemory();
+            return -1;
+        }
+        self->buffer_size = new_size;
+        avro_writer_free(self->datum_writer);
+        self->datum_writer = avro_writer_memory(
+            self->buffer, self->buffer_size);
+        if (!self->datum_writer) {
+            avro_free(self->buffer, self->buffer_size);
+            PyErr_NoMemory();
+            return -1;
+        }
+        rval = avro_value_write(self->datum_writer, &value);
+    }
+
     if (rval) {
         avro_value_decref(&value);
         PyErr_Format(PyExc_IOError, "Write error: %s", avro_strerror());
         return NULL;
     }
+
     serialized = Py_BuildValue("s#", self->buffer,
                                avro_writer_tell(self->datum_writer));
     avro_writer_reset(self->datum_writer);
