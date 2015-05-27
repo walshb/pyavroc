@@ -48,6 +48,7 @@ AvroFileWriter_init(AvroFileWriter *self, PyObject *args, PyObject *kwds)
     file = PyFile_AsFile(pyfile);
 
     if (file == NULL) {
+        PyErr_Format(PyExc_IOError, "Error accessing file (PyFile_AsFile failed)");
         return -1;
     }
 
