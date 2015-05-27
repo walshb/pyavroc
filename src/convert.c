@@ -367,10 +367,15 @@ static int
 python_to_array(ConvertInfo *info, PyObject *pyobj, avro_value_t *dest)
 {
     int rval;
-    size_t i;
-    size_t element_count;
+    Py_ssize_t i;
+    Py_ssize_t element_count;
 
     element_count = PyObject_Length(pyobj);
+
+    if (element_count < 0) {
+        avro_set_error("Error getting length for array");
+        return EINVAL;
+    }
 
     for (i = 0; i < element_count; i++) {
         PyObject *pyval = PySequence_GetItem(pyobj, i);
@@ -507,47 +512,138 @@ python_to_record(ConvertInfo *info, PyObject *pyobj, avro_value_t *dest)
     return 0;
 }
 
+static void
+set_type_error(const PyObject*const pyobj, const char*const desired_type)
+{
+    if (pyobj == NULL) {
+        avro_set_error("Missing Python object where one was expected.");
+    }
+    else {
+        PyObject* the_string = PyObject_Repr(pyobj);
+        if (the_string) {
+            PyObject* str = PyString_FromFormat("%.100s", PyString_AsString(the_string));
+            Py_DECREF(the_string);
+            the_string = str;
+        }
+
+        if (the_string) {
+            avro_set_error("Invalid python object for %s.  Got: %s", desired_type, PyString_AsString(the_string));
+            Py_DECREF(the_string);
+        }
+        else
+            avro_set_error("Invalid python object for %s. Unable to print argument value.", desired_type);
+    }
+}
+
 int
 python_to_avro(ConvertInfo *info, PyObject *pyobj, avro_value_t *dest)
 {
+    if (pyobj == NULL) {
+        avro_set_error("Missing object.  Expected a %d\n", avro_value_get_type(dest));
+        return EINVAL;
+    }
+
     switch (avro_value_get_type(dest)) {
     case AVRO_BOOLEAN:
-        return avro_value_set_boolean(dest, PyObject_IsTrue(pyobj));
+        {
+            int retval = PyObject_IsTrue(pyobj);
+            if (retval < 0) {
+                set_type_error(pyobj, "BOOLEAN");
+                return EINVAL;
+            }
+            else {
+                return avro_value_set_boolean(dest, retval);
+            }
+        }
     case AVRO_BYTES:
         {
             char *buf;
             Py_ssize_t len;
-            PyString_AsStringAndSize(pyobj, &buf, &len);
-            /* we're holding internal data so use "set" not "give" */
-            return avro_value_set_bytes(dest, buf, len);
+            if (PyString_AsStringAndSize(pyobj, &buf, &len) >= 0) {
+                /* we're holding internal data so use "set" not "give" */
+                return avro_value_set_bytes(dest, buf, len);
+            }
+            else {
+                set_type_error(pyobj, "BYTES");
+                return EINVAL;
+            }
         }
     case AVRO_DOUBLE:
-        return avro_value_set_double(dest, PyFloat_AsDouble(pyobj));
+        {
+            double retval = PyFloat_AsDouble(pyobj);
+            if (retval == -1.0 && PyErr_Occurred()) {
+                set_type_error(pyobj, "DOUBLE");
+                return EINVAL;
+            }
+            else
+                return avro_value_set_double(dest, retval);
+        }
     case AVRO_FLOAT:
-        return avro_value_set_float(dest, PyFloat_AsDouble(pyobj));
+        {
+            double retval = PyFloat_AsDouble(pyobj);
+            if (retval == -1.0 && PyErr_Occurred()) {
+                set_type_error(pyobj, "FLOAT");
+                return EINVAL;
+            }
+            else
+                return avro_value_set_float(dest, retval);
+        }
     case AVRO_INT32:
-        return avro_value_set_int(dest, PyInt_AsLong(pyobj));
+        {
+            long retval = PyInt_AsLong(pyobj);
+            if (retval == -1L && PyErr_Occurred()) {
+                set_type_error(pyobj, "INT32");
+                return EINVAL;
+            }
+            else
+                return avro_value_set_int(dest, retval);
+        }
     case AVRO_INT64:
-        return avro_value_set_long(dest, PyLong_AsLongLong(pyobj));
+        {
+            long long retval = PyLong_AsLongLong(pyobj);
+            if (retval == -1L && PyErr_Occurred()) {
+                set_type_error(pyobj, "INT64");
+                return EINVAL;
+            }
+            else
+                return avro_value_set_long(dest, retval);
+        }
     case AVRO_NULL:
         return avro_value_set_null(dest);
     case AVRO_STRING:
         {
             char *buf;
             Py_ssize_t len;
-            PyString_AsStringAndSize(pyobj, &buf, &len);
-            return avro_value_set_string_len(dest, buf, len + 1);
+            if (PyString_AsStringAndSize(pyobj, &buf, &len) >= 0)
+                return avro_value_set_string_len(dest, buf, len + 1);
+            else {
+                set_type_error(pyobj, "STRING");
+                return EINVAL;
+            }
         }
     case AVRO_ARRAY:
         return python_to_array(info, pyobj, dest);
     case AVRO_ENUM:
-        return avro_value_set_enum(dest, PyInt_AsLong(pyobj));
+        {
+            long retval = PyInt_AsLong(pyobj);
+            if (retval == -1L && PyErr_Occurred()) {
+                set_type_error(pyobj, "ENUM");
+                return EINVAL;
+            }
+            else
+                return avro_value_set_enum(dest, retval);
+        }
     case AVRO_FIXED:
         {
             char *buf;
             Py_ssize_t len;
-            PyString_AsStringAndSize(pyobj, &buf, &len);
-            return avro_value_set_fixed(dest, buf, len);
+            if (PyString_AsStringAndSize(pyobj, &buf, &len) >= 0) {
+                return avro_value_set_fixed(dest, buf, len);
+            }
+            else {
+                set_type_error(pyobj, "FIXED");
+                return EINVAL;
+            }
         }
     case AVRO_MAP:
         return python_to_map(info, pyobj, dest);
