@@ -120,3 +120,28 @@ def test_coerce_int_long():
         writer = pyavroc.AvroFileWriter(fp, schema)
         writer.write(rec)
         writer.close()
+
+def test_union_with_bool():
+    schema = '''{
+        "type": "record",
+        "name": "Rec",
+        "fields": [ {"name": "attr1", "type": [ "null", "boolean" ]} ]
+        }'''
+    av_types = pyavroc.create_types(schema)
+    with tempfile.NamedTemporaryFile() as tmpfile:
+        writer = pyavroc.AvroFileWriter(tmpfile.file, schema)
+        # Try writing null
+        writer.write(av_types.Rec(attr1=None))
+        # Try writing a boolean value
+        writer.write(av_types.Rec(attr1=True))
+        # Try writing an integer.  Should be coerced to boolean without an error
+        writer.write(av_types.Rec(attr1=33))
+        writer.write(av_types.Rec(attr1=0))
+        writer.close()
+
+        tmpfile.flush()
+        tmpfile.seek(0)
+        reader = pyavroc.AvroFileReader(tmpfile.file, types=av_types)
+        read_recs = list(reader)
+        attr_values = [ r.attr1 for r in read_recs ]
+        assert attr_values == [ None, True, True, False ]

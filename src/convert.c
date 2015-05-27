@@ -457,6 +457,13 @@ get_branch_index(ConvertInfo *info, PyObject *pyobj, avro_schema_t schema)
         }
     }
 
+    /* As a last resort, check to see if 'boolean' is in the union. Then we should try
+     * interpreting the value as one. */
+    if (branch_schema == NULL) {
+        branch_schema = avro_schema_union_branch_by_name(schema,
+                                                         &branch_index,
+                                                         "boolean");
+    }
     if (branch_schema == NULL) {
         return -1;  /* fail */
     }
