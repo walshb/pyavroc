@@ -17,6 +17,7 @@
 #include "convert.h"
 #include "record.h"
 #include "avroenum.h"
+#include <avro/schema.h>
 
 static PyObject *avro_types_type = NULL;
 
@@ -496,6 +497,9 @@ python_to_record(ConvertInfo *info, PyObject *pyobj, avro_value_t *dest)
         rval = python_to_avro(info, pyval, &field_value);
         Py_DECREF(pyval);
         if (rval) {
+            avro_prefix_error("when writing to %s.%s, ",
+                    avro_schema_name(avro_value_get_schema(dest)),
+                    field_name);
             return rval;
         }
     }
