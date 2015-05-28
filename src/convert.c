@@ -465,6 +465,7 @@ get_branch_index(ConvertInfo *info, PyObject *pyobj, avro_schema_t schema)
                                                          "boolean");
     }
     if (branch_schema == NULL) {
+        avro_set_error("no type in union suitable for type %s.", typename);
         return -1;  /* fail */
     }
 
