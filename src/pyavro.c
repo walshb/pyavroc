@@ -22,6 +22,8 @@
 #include "serializer.h"
 #include "deserializer.h"
 #include "convert.h"
+#include "avroenum.h"
+#include "record.h"
 
 static PyObject *
 create_types_func(PyObject *self, PyObject *args)
@@ -86,6 +88,9 @@ static PyMethodDef mod_methods[] = {
      "return -1; if it matches one of the n branches in a union (or one of\n"
      "the n elements in an enum), return the corresponding index (0...n-1);\n"
      "if it matches, but it's not a union or enum, return 0."
+    },
+    {"set_record_repr_helper", (PyCFunction)set_record_repr_helper_func, METH_VARARGS,
+     "Set the function used to print records."
     },
     {NULL}  /* Sentinel */
 };

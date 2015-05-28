@@ -477,6 +477,10 @@ get_branch_index(ConvertInfo *info, PyObject *pyobj, avro_schema_t schema)
             typename = "string";
         } else if (PyList_CheckExact(pyobj)) {
             typename = "array";
+        } else if (PyBool_Check(pyobj)) {
+            typename = "boolean";
+        } else if (PyDict_Check(pyobj)) {
+            typename = "map";
         } else {
             /* "long", "float" and Object types are the same for both. */
             typename = ((PyTypeObject *)PyObject_Type(pyobj))->tp_name;

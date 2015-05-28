@@ -18,6 +18,25 @@
 #include "util.h"
 #include "structmember.h"
 
+static PyObject *record_repr_helper = NULL;
+
+PyObject *
+set_record_repr_helper_func(PyObject *self, PyObject *args)
+{
+    PyObject *helper;
+
+    if (!PyArg_ParseTuple(args, "O", &helper)) {
+        return NULL;
+    }
+
+    Py_XDECREF(record_repr_helper);
+    Py_INCREF(helper);
+    record_repr_helper = helper;
+
+    Py_INCREF(Py_None);
+    return Py_None;
+}
+
 static int
 avro_record_init(AvroRecord *self, PyObject *args, PyObject *kwds)
 {
@@ -88,6 +107,21 @@ avro_record_repr(AvroRecord *self)
     size_t basicsize = Py_TYPE(self)->tp_basicsize;
     size_t nfields = (basicsize - sizeof(AvroRecord)) / sizeof(PyObject *);
     PyObject *result;
+    PyObject *type_name;
+    PyObject *field_names;
+
+    if (record_repr_helper != NULL && record_repr_helper != Py_None) {
+        type_name = PyString_FromString(Py_TYPE(self)->tp_name);
+        field_names = PyList_New(nfields);
+        for (i = 0; i < nfields; i++) {
+            /* steals a ref to the new string */
+            PyList_SET_ITEM(field_names, i, PyString_FromString(Py_TYPE(self)->tp_members[i].name));
+        }
+        PyObject *result = PyObject_CallFunctionObjArgs(record_repr_helper, type_name, field_names, self, NULL);
+        Py_DECREF(type_name);
+        Py_DECREF(field_names);
+        return result;
+    }
 
     result = chars_to_pystring("avtypes.");
     pystring_concat(&result, Py_TYPE(self)->tp_name);

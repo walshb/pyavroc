@@ -29,4 +29,6 @@ typedef struct {
 
 PyObject *get_python_obj_type(PyObject *types, avro_schema_t schema);
 
+PyObject *set_record_repr_helper_func(PyObject *self, PyObject *args);
+
 #endif
