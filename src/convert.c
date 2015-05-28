@@ -81,6 +81,13 @@ declare_types(ConvertInfo *info, avro_schema_t schema)
             /* create the Python type for this schema */
             PyObject *record_type = get_python_obj_type(info->types, schema);
             PyObject *field_types = PyObject_GetAttrString(record_type, "_fieldtypes");
+            if (field_types != NULL) {
+                /* already declared this record type */
+                return record_type;
+            }
+            PyErr_Clear();
+            field_types = PyDict_New();
+            PyMapping_SetItemString(((PyTypeObject *)record_type)->tp_dict, "_fieldtypes", field_types);
             for (i = 0; i < field_count; i++) {
                 PyObject *field_type = declare_types(info, avro_schema_record_field_get_by_index(schema, i));
                 /* this will INCREF, so takes hold of the object */
