@@ -49,6 +49,8 @@ class Serializer(object):
 
 
 def test_exc():
+    with pytest.raises(TypeError):
+        pyavroc.AvroDeserializer(1)
     with pytest.raises(IOError):
         pyavroc.AvroDeserializer('NOT_A_VALID_JSON')
 

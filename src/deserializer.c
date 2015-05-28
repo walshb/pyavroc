@@ -30,13 +30,12 @@ AvroDeserializer_init(AvroDeserializer *self, PyObject *args, PyObject *kwds)
     self->flags = 0;
     self->iface = NULL;
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|O", kwlist,
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "s|O", kwlist,
                                      &schema_json, &types)) {
         return -1;
     }
 
-    rval = avro_schema_from_json(PyString_AsString(schema_json),
-                                 0, &self->schema, NULL);
+    rval = avro_schema_from_json(schema_json, 0, &self->schema, NULL);
     if (rval != 0 || self->schema == NULL) {
         PyErr_Format(PyExc_IOError, "Error reading schema: %s",
                      avro_strerror());

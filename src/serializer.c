@@ -34,8 +34,7 @@ AvroSerializer_init(AvroSerializer *self, PyObject *args, PyObject *kwds)
         return -1;
     }
 
-    rval = avro_schema_from_json(schema_json,
-                                 0, &self->schema, NULL);
+    rval = avro_schema_from_json(schema_json, 0, &self->schema, NULL);
     if (rval != 0 || self->schema == NULL) {
         PyErr_Format(PyExc_IOError, "Error reading schema: %s",
                      avro_strerror());

@@ -46,6 +46,8 @@ class Deserializer(object):
 
 
 def test_exc():
+    with pytest.raises(TypeError):
+        pyavroc.AvroSerializer(1)
     with pytest.raises(IOError):
         pyavroc.AvroSerializer('NOT_A_VALID_JSON')
 
@@ -65,20 +67,10 @@ def test_serialize_record():
         assert deser_rec['office'] == office
         assert deser_rec['favorite_number'] is None
 
+
 def test_big():
     avtypes = pyavroc.create_types(SCHEMA)
     serializer = pyavroc.AvroSerializer(SCHEMA)
     long_str = 'X' * (10 * 1024 * 1024)
     avro_obj = avtypes.User(name=long_str, office=long_str)
     serializer.serialize(avro_obj)
-
-def test_constructor_type_checking():
-    try:
-        pyavroc.AvroSerializer(1)
-    except TypeError:
-        pass
-    except Exception as e:
-        import sys
-        print >> sys.stderr, "AvroSerializer constructor didn't raise a TypeError on bad input"
-        print >> sys.stderr, type(e), e
-        assert False
