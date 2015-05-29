@@ -124,14 +124,8 @@ AvroSerializer_serialize(AvroSerializer *self, PyObject *args)
             return NULL;
         }
         self->buffer_size = new_size;
-        avro_writer_free(self->datum_writer);
-        self->datum_writer = avro_writer_memory(
-            self->buffer, self->buffer_size);
-        if (!self->datum_writer) {
-            avro_free(self->buffer, self->buffer_size);
-            PyErr_NoMemory();
-            return NULL;
-        }
+        avro_writer_memory_set_dest(
+              self->datum_writer, self->buffer, self->buffer_size);
         rval = avro_value_write(self->datum_writer, &value);
     }
 
