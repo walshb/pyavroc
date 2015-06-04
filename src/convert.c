@@ -427,6 +427,9 @@ get_branch_index(ConvertInfo *info, PyObject *pyobj, avro_schema_t schema)
     avro_schema_t branch_schema;
     int branch_index;
 
+    if (PyDict_Check(pyobj))
+        return validate(pyobj, schema) - 1;
+
     if (pyobj == Py_None) {
         typename = "null";
     } else {
@@ -480,9 +483,20 @@ validate(PyObject *pyobj, avro_schema_t schema) {
         /* FIXME: check that string size == expected size */
         return PyString_Check(pyobj);
     case AVRO_ENUM:
-        /* FIXME: integers could be allowed as well */
-        return (PyString_Check(pyobj) && avro_schema_enum_get_by_name(
-                  schema, PyString_AsString(pyobj)) >= 0);
+        /* return 0 for no-match, index + 1 for match */
+        {
+            if (PyString_Check(pyobj)) {
+                return (avro_schema_enum_get_by_name(
+                  schema, PyString_AsString(pyobj)
+                ) + 1);
+            } else if (PyInt_Check(pyobj) || PyLong_Check(pyobj)) {
+                int index = PyInt_AsLong(pyobj);
+                int size = avro_schema_enum_number_of_symbols(schema);
+                return (index >= 0 && index < size) ? index + 1 : 0;
+            } else {
+                return 0;
+            }
+        }
     case AVRO_ARRAY:
         {
             avro_schema_t subschema = avro_schema_array_items(schema);
@@ -505,13 +519,13 @@ validate(PyObject *pyobj, avro_schema_t schema) {
             return 1;
         }
     case AVRO_UNION:
-        /* FIXME: encode the branch index in the return value */
+        /* return 0 for no-match, branch index + 1 for match */
         {
             size_t union_size = avro_schema_union_size(schema);
             size_t i;
             for (i = 0; i < union_size; i++)
                 if (validate(pyobj, avro_schema_union_branch(schema, i)))
-                    return 1;
+                    return i + 1;
             return 0;
         }
     case AVRO_RECORD:
@@ -565,17 +579,31 @@ python_to_record(ConvertInfo *info, PyObject *pyobj, avro_value_t *dest)
         const char *field_name;
         avro_value_t field_value;
         PyObject *pyval;
+        int must_decref = 0;
 
         avro_value_get_by_index(dest, i, &field_value, &field_name);
 
-        pyval = PyObject_GetAttrString(pyobj, field_name);
-        if (pyval == NULL) {
-            PyErr_Clear();
-            continue;
+        if (PyDict_Check(pyobj)) {
+            pyval = PyDict_GetItemString(pyobj, field_name);  /* borrowed */
+            if (pyval == NULL) {
+                PyErr_Clear();
+                /* FIXME: check that this not a required field? */
+                pyval = Py_None;
+            }
+        } else {
+            pyval = PyObject_GetAttrString(pyobj, field_name);  /* new */
+            if (pyval == NULL) {
+                PyErr_Clear();
+                continue;
+            } else {
+                must_decref = 1;
+            }
         }
 
         rval = python_to_avro(info, pyval, &field_value);
-        Py_DECREF(pyval);
+        if (must_decref) {
+            Py_DECREF(pyval);
+        }
         if (rval) {
             return rval;
         }
@@ -618,7 +646,10 @@ python_to_avro(ConvertInfo *info, PyObject *pyobj, avro_value_t *dest)
     case AVRO_ARRAY:
         return python_to_array(info, pyobj, dest);
     case AVRO_ENUM:
-        return avro_value_set_enum(dest, PyInt_AsLong(pyobj));
+        {
+            int index = validate(pyobj, avro_value_get_schema(dest)) - 1;
+            return avro_value_set_enum(dest, index);
+        }
     case AVRO_FIXED:
         {
             char *buf;
