@@ -457,6 +457,87 @@ get_branch_index(ConvertInfo *info, PyObject *pyobj, avro_schema_t schema)
     return branch_index;
 }
 
+int
+validate(PyObject *pyobj, avro_schema_t schema) {
+    switch (schema->type) {
+    case AVRO_NULL:
+        return (pyobj == Py_None);
+    case AVRO_BOOLEAN:
+        return PyBool_Check(pyobj);
+    case AVRO_BYTES:
+        return PyString_Check(pyobj);
+    case AVRO_STRING:
+        return (PyString_Check(pyobj) || PyUnicode_Check(pyobj));
+    case AVRO_INT32:
+    case AVRO_INT64:
+        /* FIXME: discriminate by comparing value to 32/64 bit limits */
+        return (PyInt_Check(pyobj) || PyLong_Check(pyobj));
+    case AVRO_FLOAT:
+    case AVRO_DOUBLE:
+        return (PyInt_Check(pyobj) || PyLong_Check(pyobj) ||
+                PyFloat_Check(pyobj));
+    case AVRO_FIXED:
+        /* FIXME: check that string size == expected size */
+        return PyString_Check(pyobj);
+    case AVRO_ENUM:
+        /* FIXME: integers could be allowed as well */
+        return (PyString_Check(pyobj) && avro_schema_enum_get_by_name(
+                  schema, PyString_AsString(pyobj)) >= 0);
+    case AVRO_ARRAY:
+        {
+            avro_schema_t subschema = avro_schema_array_items(schema);
+            Py_ssize_t i;
+            if (!PyList_Check(pyobj)) return 0;
+            for (i = 0; i < PyList_GET_SIZE(pyobj); i++)
+                if (!validate(PyList_GET_ITEM(pyobj, i), subschema))
+                    return 0;
+            return 1;
+        }
+    case AVRO_MAP:
+        {
+            avro_schema_t subschema = avro_schema_map_values(schema);
+            PyObject *key, *value;
+            Py_ssize_t pos = 0;
+            if (!PyDict_Check(pyobj)) return 0;
+            while (PyDict_Next(pyobj, &pos, &key, &value))
+                if (!PyString_Check(key) || !validate(value, subschema))
+                    return 0;
+            return 1;
+        }
+    case AVRO_UNION:
+        /* FIXME: encode the branch index in the return value */
+        {
+            size_t union_size = avro_schema_union_size(schema);
+            size_t i;
+            for (i = 0; i < union_size; i++)
+                if (validate(pyobj, avro_schema_union_branch(schema, i)))
+                    return 1;
+            return 0;
+        }
+    case AVRO_RECORD:
+        {
+            size_t field_count = avro_schema_record_size(schema);
+            size_t i;
+            PyObject *value;
+            avro_schema_t subschema;
+
+            if (!PyDict_Check(pyobj)) return 0;
+            for (i = 0; i < field_count; i++) {
+                value = PyDict_GetItemString(
+                  pyobj, avro_schema_record_field_name(schema, i));
+                if (value == NULL) {
+                    value = Py_None;
+                }
+                subschema = avro_schema_record_field_get_by_index(schema, i);
+                if (!validate(value, subschema)) return 0;
+            }
+            return 1;
+        }
+    default:
+        return 0;
+    }
+}
+
 static int
 python_to_union(ConvertInfo *info, PyObject *pyobj, avro_value_t *dest)
 {

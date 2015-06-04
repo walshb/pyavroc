@@ -18,6 +18,7 @@
 
 #include "filereader.h"
 #include "filewriter.h"
+#include "convert.h"
 
 static PyObject *
 create_types_func(PyObject *self, PyObject *args)
@@ -48,9 +49,33 @@ create_types_func(PyObject *self, PyObject *args)
     return info.types;
 }
 
+static PyObject *
+validate_func(PyObject *self, PyObject *args) {
+    int rval;
+    PyObject *datum;
+    char *schema_json;
+    avro_schema_t schema;
+
+    if (!PyArg_ParseTuple(args, "Os", &datum, &schema_json)) {
+        return NULL;
+    }
+
+    rval = avro_schema_from_json(schema_json, 0, &schema, NULL);
+    if (rval != 0 || schema == NULL) {
+        PyErr_Format(PyExc_IOError, "Error reading schema: %s",
+                     avro_strerror());
+        return NULL;
+    }
+    return PyBool_FromLong(validate(datum, schema));
+}
+
+
 static PyMethodDef mod_methods[] = {
     {"create_types", (PyCFunction)create_types_func, METH_VARARGS,
      "Take a JSON schema and return a structure of Python types."
+    },
+    {"validate", (PyCFunction)validate_func, METH_VARARGS,
+     "Validate datum vs schema."
     },
     {NULL}  /* Sentinel */
 };

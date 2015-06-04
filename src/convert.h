@@ -24,6 +24,10 @@ typedef struct {
     PyObject *types;
 } ConvertInfo;
 
+
+/* Check if a Python datum is compatible with a given schema */
+int validate(PyObject *pyobj, avro_schema_t schema);
+
 PyObject *avro_to_python(ConvertInfo *info, avro_value_t *);
 
 int python_to_avro(ConvertInfo *info, PyObject *pyobj, avro_value_t *);
