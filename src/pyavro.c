@@ -18,6 +18,8 @@
 
 #include "filereader.h"
 #include "filewriter.h"
+#include "serializer.h"
+#include "deserializer.h"
 
 static PyObject *
 create_types_func(PyObject *self, PyObject *args)
@@ -74,6 +76,16 @@ init_pyavroc(void)
         return;
     }
 
+    avroSerializerType.tp_new = PyType_GenericNew;
+    if (PyType_Ready(&avroSerializerType) < 0) {
+        return;
+    }
+
+    avroDeserializerType.tp_new = PyType_GenericNew;
+    if (PyType_Ready(&avroDeserializerType) < 0) {
+        return;
+    }
+
     m = Py_InitModule3("_pyavroc", mod_methods,
                        "Python wrapper around Avro-C");
 
@@ -82,6 +94,13 @@ init_pyavroc(void)
 
     Py_INCREF(&avroFileWriterType);
     PyModule_AddObject(m, "AvroFileWriter", (PyObject *)&avroFileWriterType);
+
+    Py_INCREF(&avroSerializerType);
+    PyModule_AddObject(m, "AvroSerializer", (PyObject *)&avroSerializerType);
+
+    Py_INCREF(&avroDeserializerType);
+    PyModule_AddObject(m, "AvroDeserializer",
+                       (PyObject *)&avroDeserializerType);
 
     PyModule_AddObject(m, "AvroTypes", (PyObject*)get_avro_types_type());
 }
