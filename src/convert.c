@@ -78,21 +78,23 @@ declare_types(ConvertInfo *info, avro_schema_t schema)
         {
             size_t field_count = avro_schema_record_size(schema);
             size_t i;
-            /* create the Python type for this schema */
-            PyObject *record_type = get_python_obj_type(info->types, schema);
-            PyObject *field_types = PyObject_GetAttrString(record_type, "_fieldtypes");
-            if (field_types != NULL) {
+            const char *record_name = avro_schema_name(schema);
+            PyObject *record_type = PyObject_GetAttrString(info->types, record_name);
+            PyObject *field_types;
+            if (record_type != NULL) {
                 /* already declared this record type */
+                Py_DECREF(record_type);
                 return record_type;
             }
-            PyErr_Clear();
-            field_types = PyDict_New();
-            PyMapping_SetItemString(((PyTypeObject *)record_type)->tp_dict, "_fieldtypes", field_types);
+            /* create the Python type for this schema */
+            record_type = get_python_obj_type(info->types, schema);
+            field_types = PyObject_GetAttrString(record_type, "_fieldtypes");
             for (i = 0; i < field_count; i++) {
                 PyObject *field_type = declare_types(info, avro_schema_record_field_get_by_index(schema, i));
                 /* this will INCREF, so takes hold of the object */
                 PyMapping_SetItemString(field_types, avro_schema_record_field_name(schema, i), field_type);
             }
+            Py_DECREF(field_types);
             return record_type;
         }
     case AVRO_LINK:

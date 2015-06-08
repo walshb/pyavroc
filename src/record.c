@@ -258,6 +258,9 @@ create_new_type(avro_schema_t schema)
     type->tp_members = member_defs;
     type->tp_new = PyType_GenericNew;
 
+    type->tp_dict = PyDict_New();
+    PyMapping_SetItemString(type->tp_dict, "_fieldtypes", PyDict_New());
+
     if (PyType_Ready(type) < 0) {
         return NULL;
     }
