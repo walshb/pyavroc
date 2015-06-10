@@ -77,6 +77,43 @@ def test_write_union_obj():
     shutil.rmtree(dirname)
 
 
+def test_write_wrong_value():
+    schema = '''[{"name": "Rec1", "type": "record",
+"fields": [ {"name": "attr1", "type": "int"} ] },
+{"name": "Rec2", "type": "record",
+"fields": [ {"name": "attr2", "type": "string"} ]}
+]'''
+
+    dirname = tempfile.mkdtemp()
+    filename = os.path.join(dirname, 'test.avro')
+
+    avtypes = pyavroc.create_types(schema)
+
+    with pytest.raises(TypeError) as excinfo:
+        with open(filename, 'w') as fp:
+            writer = pyavroc.AvroFileWriter(fp, schema)
+            writer.write(avtypes.Rec1(attr1='x' * 120))
+            writer.close()
+
+    expected_error = "when writing to Rec1.attr1, invalid python object '" \
+                     + ('x' * 99) + ", an integer is required"
+
+    assert expected_error in str(excinfo.value)
+
+    with pytest.raises(TypeError) as excinfo:
+        with open(filename, 'w') as fp:
+            writer = pyavroc.AvroFileWriter(fp, schema)
+            writer.write(avtypes.Rec2(attr2=123))
+            writer.close()
+
+    expected_error = "when writing to Rec2.attr2, invalid python object 123," \
+                     " expected string or Unicode object, int found"
+
+    assert expected_error in str(excinfo.value)
+
+    shutil.rmtree(dirname)
+
+
 def test_write_closed():
     schema = '''[{"name": "Rec1", "type": "record",
 "fields": [ {"name": "attr1", "type": "int"} ] },

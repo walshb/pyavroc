@@ -131,7 +131,7 @@ AvroSerializer_serialize(AvroSerializer *self, PyObject *args)
 
     if (rval) {
         avro_value_decref(&value);
-        PyErr_Format(PyExc_IOError, "Write error: %s", avro_strerror());
+        set_error_prefix("Write error: ");
         return NULL;
     }
 

@@ -167,7 +167,7 @@ AvroFileReader_iternext(AvroFileReader *self)
         if (rval == EOF) {
             return NULL;
         }
-        PyErr_Format(PyExc_IOError, "Error reading: %s", avro_strerror());
+        set_error_prefix("Error reading: ");
         return NULL;
     }
 

@@ -142,7 +142,7 @@ AvroFileWriter_write(AvroFileWriter *self, PyObject *args)
     if (rval) {
         avro_value_decref(&value);
 
-        PyErr_Format(PyExc_IOError, "Error writing: %s", avro_strerror());
+        set_error_prefix("Error writing: ");
         return NULL;
     }
 

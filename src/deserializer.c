@@ -17,6 +17,7 @@
 #include "deserializer.h"
 #include "convert.h"
 #include "structmember.h"
+#include "error.h"
 
 
 static int
@@ -120,7 +121,7 @@ AvroDeserializer_deserialize(AvroDeserializer *self, PyObject *args)
 
     if (rval) {
         avro_value_decref(&value);
-        PyErr_Format(PyExc_IOError, "Read error: %s", avro_strerror());
+        set_error_prefix("Read error: ");
         return NULL;
     }
 
