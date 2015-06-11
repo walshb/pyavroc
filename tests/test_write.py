@@ -20,6 +20,8 @@ import os
 import shutil
 import tempfile
 
+import pytest
+
 import pyavroc
 
 import _testhelper
@@ -71,6 +73,30 @@ def test_write_union_obj():
 
     assert read_recs != recs
     assert _testhelper.objs_to_dicts(read_recs) == _testhelper.objs_to_dicts(recs)
+
+    shutil.rmtree(dirname)
+
+
+def test_write_closed():
+    schema = '''[{"name": "Rec1", "type": "record",
+"fields": [ {"name": "attr1", "type": "int"} ] },
+{"name": "Rec2", "type": "record",
+"fields": [ {"name": "attr2", "type": "string"} ]}
+]'''
+
+    dirname = tempfile.mkdtemp()
+    filename = os.path.join(dirname, 'test.avro')
+
+    avtypes = pyavroc.create_types(schema)
+
+    fp = open(filename, 'w')
+    writer = pyavroc.AvroFileWriter(fp, schema)
+    writer.write(avtypes.Rec1(attr1=123))
+    writer.close()
+    fp.close()
+
+    with pytest.raises(IOError):
+        writer.write(avtypes.Rec1(attr1=456))
 
     shutil.rmtree(dirname)
 

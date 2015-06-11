@@ -72,7 +72,18 @@ AvroFileWriter_init(AvroFileWriter *self, PyObject *args, PyObject *kwds)
 }
 
 static int
-do_close(AvroFileWriter* self)
+is_open(AvroFileWriter *self)
+{
+    if (self->pyfile != NULL) {
+        FILE *file = PyFile_AsFile(self->pyfile);
+        return (file != NULL && (self->flags & AVROFILE_READER_OK));
+    }
+
+    return 0;
+}
+
+static int
+do_close(AvroFileWriter *self)
 {
     if (self->iface != NULL) {
         avro_value_iface_decref(self->iface);
@@ -82,10 +93,16 @@ do_close(AvroFileWriter* self)
         avro_schema_decref(self->schema);
         self->flags &= ~AVROFILE_SCHEMA_OK;
     }
-    if (self->flags & AVROFILE_READER_OK) {
-        avro_file_writer_close(self->writer);
-        self->flags &= ~AVROFILE_READER_OK;
+
+    if (self->pyfile != NULL) {
+        if (is_open(self)) {
+            avro_file_writer_close(self->writer);
+            self->flags &= ~AVROFILE_READER_OK;
+        }
+
+        Py_CLEAR(self->pyfile);
     }
+
     return 0;
 }
 
@@ -93,10 +110,6 @@ static void
 AvroFileWriter_dealloc(AvroFileWriter *self)
 {
     do_close(self);
-
-    if (self->pyfile != NULL) {
-        Py_CLEAR(self->pyfile);
-    }
 
     self->ob_type->tp_free((PyObject*)self);
 }
@@ -109,6 +122,11 @@ AvroFileWriter_write(AvroFileWriter *self, PyObject *args)
     PyObject *pyobj;
 
     if (!PyArg_ParseTuple(args, "O", &pyobj)) {
+        return NULL;
+    }
+
+    if (!is_open(self)) {
+        PyErr_SetString(PyExc_IOError, "file closed");
         return NULL;
     }
 

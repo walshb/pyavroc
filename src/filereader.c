@@ -112,6 +112,17 @@ AvroFileReader_init(AvroFileReader *self, PyObject *args, PyObject *kwds)
     return 0;
 }
 
+static int
+is_open(AvroFileReader *self)
+{
+    if (self->pyfile != NULL) {
+        FILE *file = PyFile_AsFile(self->pyfile);
+        return (file != NULL && (self->flags & AVROFILE_READER_OK));
+    }
+
+    return 0;
+}
+
 static void
 AvroFileReader_dealloc(AvroFileReader *self)
 {
@@ -122,10 +133,11 @@ AvroFileReader_dealloc(AvroFileReader *self)
         avro_schema_decref(self->schema);
         Py_CLEAR(self->schema_json);
     }
-    if (self->flags & AVROFILE_READER_OK) {
-        avro_file_reader_close(self->reader);
-    }
     if (self->pyfile != NULL) {
+        if (is_open(self)) {
+            avro_file_reader_close(self->reader);
+        }
+
         Py_CLEAR(self->pyfile);
     }
 
