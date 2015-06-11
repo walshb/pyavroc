@@ -14,39 +14,41 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import pytest
 from pyavroc import validate
 
-# copied from pure Python Apache Avro tests, except for the fact that
-# the C-level JSON parser expects a top-level '{' or '['
+# Based on the test_io module from the official Python API.  One
+# difference is that the C-level JSON parser expects a top-level '{'
+# or '[', so primitive schemas must be passed as 1-element unions.
 TEST_CASES = (
-    ('["null"]', None),
-    ('["boolean"]', True),
-    ('["string"]', unicode('adsfasdf09809dsf-=adsf')),
-    ('["bytes"]', '12345abcd'),
-    ('["int"]', 1234),
-    ('["long"]', 1234),
-    ('["float"]', 1234.0),
-    ('["double"]', 1234.0),
-    ('{"type": "fixed", "name": "Test", "size": 1}', 'B'),
-    ('{"type": "enum", "name": "Test", "symbols": ["A", "B"]}', 'B'),
-    ('{"type": "array", "items": "long"}', [1, 3, 2]),
-    ('{"type": "map", "values": "long"}', {'a': 1, 'b': 3, 'c': 2}),
-    ('["string", "null", "long"]', None),
+    ('["null"]', None, 0),
+    ('["boolean"]', True, 0),
+    ('["string"]', unicode('adsfasdf09809dsf-=adsf'), 0),
+    ('["bytes"]', '12345abcd', 0),
+    ('["int"]', 1234, 0),
+    ('["long"]', 1234, 0),
+    ('["float"]', 1234.0, 0),
+    ('["double"]', 1234.0, 0),
+    ('{"type": "fixed", "name": "Test", "size": 1}', 'B', 0),
+    ('{"type": "enum", "name": "Test", "symbols": ["A", "B"]}', 'A', 0),
+    ('{"type": "enum", "name": "Test", "symbols": ["A", "B"]}', 'B', 1),
+    ('{"type": "array", "items": "long"}', [1, 3, 2], 0),
+    ('{"type": "map", "values": "long"}', {'a': 1, 'b': 3, 'c': 2}, 0),
+    ('["string", "null", "long"]', 'spam', 0),
+    ('["string", "null", "long"]', None, 1),
+    ('["string", "null", "long"]', 42L, 2),
     ("""\
     {"type": "record",
     "name": "Test",
     "fields": [{"name": "f", "type": "long"}]}
-    """, {'f': 5}),
+    """, {'f': 5}, 0),
 )
 
 
 def test_validate_schemas():
-    for schema, datum in TEST_CASES:
-        assert validate(datum, schema)
+    for schema, datum, exp_res in TEST_CASES:
+        assert validate(datum, schema) == exp_res
 
 
-@pytest.mark.xfail(reason="not supported (yet)")
 def test_validate_recursive():
     schema = """\
     {"type": "record",

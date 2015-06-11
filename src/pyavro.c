@@ -66,7 +66,7 @@ validate_func(PyObject *self, PyObject *args) {
                      avro_strerror());
         return NULL;
     }
-    return PyBool_FromLong(validate(datum, schema));
+    return Py_BuildValue("i", validate(datum, schema));
 }
 
 
@@ -75,7 +75,10 @@ static PyMethodDef mod_methods[] = {
      "Take a JSON schema and return a structure of Python types."
     },
     {"validate", (PyCFunction)validate_func, METH_VARARGS,
-     "Validate datum vs schema."
+     "validate(datum, schema): check if datum matches schema. If it doesn't,\n"
+     "return -1; if it matches one of the n branches in a union (or one of\n"
+     "the n elements in an enum), return the corresponding index (0...n-1);\n"
+     "if it matches, but it's not a union or enum, return 0."
     },
     {NULL}  /* Sentinel */
 };
