@@ -1,0 +1,3 @@
+language: python
+script:
+  - ./clone_avro_and_build.sh --static
