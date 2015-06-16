@@ -1,13 +1,3 @@
 language: python
-addons:
-  apt-packages:
-  - zlib1g-dev
-before_install:
-  - uname -a
-  - free -m
-  - df -h
-  - ulimit -a
-  - python -V
-  - pip list
 script:
   - ./clone_avro_and_build.sh --static
