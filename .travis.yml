@@ -7,10 +7,9 @@ before_install:
   - free -m
   - df -h
   - ulimit -a
-  - virtualenv --python=python venv
-  - . venv/bin/activate
   - python -V
   - pip install --upgrade pip setuptools
-  - pip install py.test
+  - pip install pytest
+  - pip list
 script:
   - ./clone_avro_and_build.sh --static
