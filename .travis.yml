@@ -2,4 +2,15 @@ language: python
 addons:
   apt-packages:
   - zlib1g-dev
-script: "./clone_avro_and_build.sh"
+before_install:
+  - uname -a
+  - free -m
+  - df -h
+  - ulimit -a
+  - virtualenv --python=python venv
+  - . venv/bin/activate
+  - python -V
+  - pip install --upgrade pip setuptools
+  - pip install py.test
+script:
+  - ./clone_avro_and_build.sh --static
