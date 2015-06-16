@@ -14,8 +14,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
 set -eux
+
+STATIC=0
+[ "${1:-}" = '--static' ] && STATIC=1
 
 MYDIR=$(dirname $(readlink -f "$0"))
 
@@ -27,8 +29,13 @@ AVRO=$MYDIR/local_avro
 
 # build avro
 
-if ! [ -f $AVRO/dist/lib/libavro.so ]
+if ! [ -f $AVRO/dist/lib/libavro.a ] && ! [ -f $AVRO/dist/lib/libavro.so ]
 then
+    # libavro.a must contain PIC
+    mv -n $AVRO/lang/c/src/CMakeLists.txt $AVRO/lang/c/src/orig_CMakeLists
+    cp -v $AVRO/lang/c/src/orig_CMakeLists $AVRO/lang/c/src/CMakeLists.txt
+    echo 'set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${CMAKE_SHARED_LIBRARY_C_FLAGS}")' >>$AVRO/lang/c/src/CMakeLists.txt
+
     mkdir -p $AVRO/build $AVRO/dist
     cd $AVRO/build
     cmake $AVRO/lang/c -DCMAKE_VERBOSE_MAKEFILE=ON -DCMAKE_INSTALL_PREFIX=$AVRO/dist -DCMAKE_BUILD_TYPE=Release -DTHREADSAFE=true
@@ -37,6 +44,9 @@ then
     # workaround older cmake
     mv $AVRO/build/avro-c.pc $AVRO/build/src/ || true
     make install
+
+    # use static lib
+    [ $STATIC -eq 0 ] || rm -f $AVRO/dist/lib/libavro.so*
 fi
 
 # build avro python
@@ -52,7 +62,14 @@ cd $MYDIR
 rm -rf build dist
 
 export PYAVROC_CFLAGS="-I$AVRO/dist/include"
-export LDFLAGS="-L$AVRO/dist/lib -Wl,-rpath,$AVRO/dist/lib"
+if [ $STATIC -ne 0 ]
+then
+    # a bit cheesy: get libraries from the cmake link.txt file
+    export PYAVROC_LIBS=$(tr ' ' '\n' <$AVRO/build/src/CMakeFiles/avro-shared.dir/link.txt | grep '^-l' | cut -c3-)
+    export LDFLAGS="-L$AVRO/dist/lib"
+else
+    export LDFLAGS="-L$AVRO/dist/lib -Wl,-rpath,$AVRO/dist/lib"
+fi
 
 python setup.py build
 
