@@ -125,3 +125,30 @@ def test_write_read_empty():
     assert len(read_recs) == 0
 
     shutil.rmtree(dirname)
+
+
+def test_write_union_of_dicts():
+    schema = '''[{"name": "Rec1", "type": "record",
+"fields": [ {"name": "attr1", "type": "int"} ] },
+{"name": "Rec2", "type": "record",
+"fields": [ {"name": "attr2", "type": "string"} ]}
+]'''
+
+    dirname = tempfile.mkdtemp()
+    filename = os.path.join(dirname, 'test.avro')
+
+    recs = [{'attr1': 123}, {'attr2': 'hello'}]
+
+    with open(filename, 'w') as fp:
+        writer = pyavroc.AvroFileWriter(fp, schema)
+        for rec in recs:
+            writer.write(rec)
+        writer.close()
+
+    with open(filename) as fp:
+        reader = pyavroc.AvroFileReader(fp, types=False)
+        read_recs = list(reader)
+
+    assert read_recs == recs
+
+    shutil.rmtree(dirname)
