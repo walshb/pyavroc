@@ -24,6 +24,14 @@ typedef struct {
     PyObject *types;
 } ConvertInfo;
 
+/*
+ * Check if the Python datum `pyobj` matches the given schema.  If it
+ * doesn't, return -1; if it matches one of the n branches in a union
+ * (or one of the n elements in an enum), return the corresponding index
+ * (0 ... n-1); if it matches, but it's not a union or enum, return 0.
+ */
+int validate(PyObject *pyobj, avro_schema_t schema);
+
 PyObject *avro_to_python(ConvertInfo *info, avro_value_t *);
 
 int python_to_avro(ConvertInfo *info, PyObject *pyobj, avro_value_t *);
