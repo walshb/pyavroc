@@ -152,3 +152,12 @@ def test_write_union_of_dicts():
     assert read_recs == recs
 
     shutil.rmtree(dirname)
+
+
+def test_bad_file_argument():
+    try:
+        with tempfile.NamedTemporaryFile() as fp:
+            writer = pyavroc.AvroFileWriter(fp, '["null", "int"]')
+            writer.close()
+    except TypeError:
+        pass
