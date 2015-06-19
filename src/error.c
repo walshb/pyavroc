@@ -58,7 +58,7 @@ set_avro_error(int rval)
 }
 
 int
-set_type_error(int rval, const PyObject *pyobj, const char *desired_type)
+set_type_error(int rval, const PyObject *pyobj)
 {
     PyObject* pyrepr;
 
@@ -69,8 +69,7 @@ set_type_error(int rval, const PyObject *pyobj, const char *desired_type)
     pyrepr = PyObject_Repr(pyobj);
 
     if (pyrepr != NULL) {
-        char *repr = PyString_AsString(pyrepr);
-        set_error_prefix("invalid python object %.100s, ", repr);
+        set_error_prefix("invalid python object %.100s, ", PyString_AsString(pyrepr));
         Py_DECREF(pyrepr);
     }  /* otherwise the error is already set, so leave it alone. */
 

@@ -641,7 +641,7 @@ python_to_avro(ConvertInfo *info, PyObject *pyobj, avro_value_t *dest)
         {
             int retval = PyObject_IsTrue(pyobj);
             if (retval < 0) {
-                return set_type_error(EINVAL, pyobj, "bool");
+                return set_type_error(EINVAL, pyobj);
             }
             return set_avro_error(avro_value_set_boolean(dest, retval));
         }
@@ -650,7 +650,7 @@ python_to_avro(ConvertInfo *info, PyObject *pyobj, avro_value_t *dest)
             char *buf;
             Py_ssize_t len;
             if (PyString_AsStringAndSize(pyobj, &buf, &len) < 0) {
-                return set_type_error(EINVAL, pyobj, "bytes");
+                return set_type_error(EINVAL, pyobj);
             }
             /* we're holding internal data so use "set" not "give" */
             return set_avro_error(avro_value_set_bytes(dest, buf, len));
@@ -659,7 +659,7 @@ python_to_avro(ConvertInfo *info, PyObject *pyobj, avro_value_t *dest)
         {
             double retval = PyFloat_AsDouble(pyobj);
             if (retval == -1.0 && PyErr_Occurred()) {
-                return set_type_error(EINVAL, pyobj, "double");
+                return set_type_error(EINVAL, pyobj);
             }
             return set_avro_error(avro_value_set_double(dest, retval));
         }
@@ -667,7 +667,7 @@ python_to_avro(ConvertInfo *info, PyObject *pyobj, avro_value_t *dest)
         {
             double retval = PyFloat_AsDouble(pyobj);
             if (retval == -1.0 && PyErr_Occurred()) {
-                return set_type_error(EINVAL, pyobj, "float");
+                return set_type_error(EINVAL, pyobj);
             }
             return set_avro_error(avro_value_set_float(dest, retval));
         }
@@ -675,7 +675,7 @@ python_to_avro(ConvertInfo *info, PyObject *pyobj, avro_value_t *dest)
         {
             long retval = PyInt_AsLong(pyobj);
             if (retval == -1L && PyErr_Occurred()) {
-                return set_type_error(EINVAL, pyobj, "int32");
+                return set_type_error(EINVAL, pyobj);
             }
             return set_avro_error(avro_value_set_int(dest, retval));
         }
@@ -683,7 +683,7 @@ python_to_avro(ConvertInfo *info, PyObject *pyobj, avro_value_t *dest)
         {
             long long retval = PyLong_AsLongLong(pyobj);
             if (retval == -1L && PyErr_Occurred()) {
-                return set_type_error(EINVAL, pyobj, "int64");
+                return set_type_error(EINVAL, pyobj);
             }
             return set_avro_error(avro_value_set_long(dest, retval));
         }
@@ -694,7 +694,7 @@ python_to_avro(ConvertInfo *info, PyObject *pyobj, avro_value_t *dest)
             char *buf;
             Py_ssize_t len;
             if (PyString_AsStringAndSize(pyobj, &buf, &len) < 0) {
-                return set_type_error(EINVAL, pyobj, "string");
+                return set_type_error(EINVAL, pyobj);
             }
             return set_avro_error(avro_value_set_string_len(dest, buf, len + 1));
         }
@@ -705,7 +705,7 @@ python_to_avro(ConvertInfo *info, PyObject *pyobj, avro_value_t *dest)
             int retval = validate(pyobj, avro_value_get_schema(dest));
             return avro_value_set_enum(dest, index);
             if (retval == -1L && PyErr_Occurred()) {
-                return set_type_error(EINVAL, pyobj, "enum");
+                return set_type_error(EINVAL, pyobj);
             }
             return set_avro_error(avro_value_set_enum(dest, retval));
         }
@@ -714,7 +714,7 @@ python_to_avro(ConvertInfo *info, PyObject *pyobj, avro_value_t *dest)
             char *buf;
             Py_ssize_t len;
             if (PyString_AsStringAndSize(pyobj, &buf, &len) < 0) {
-                return set_type_error(EINVAL, pyobj, "fixed");
+                return set_type_error(EINVAL, pyobj);
             }
             return set_avro_error(avro_value_set_fixed(dest, buf, len));
         }
