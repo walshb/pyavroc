@@ -620,10 +620,7 @@ python_to_record(ConvertInfo *info, PyObject *pyobj, avro_value_t *dest)
         }
         if (rval) {
             const char *record_name = avro_schema_name(avro_value_get_schema(dest));
-            char *prefix = (char *)PyMem_Malloc(strlen(record_name) + strlen(field_name) + 128);
-            sprintf(prefix, "when writing to %s.%s, ", record_name, field_name);
-            set_error_prefix(prefix);
-            PyMem_Free(prefix);
+            set_error_prefix("when writing to %s.%s, ", record_name, field_name);
             return rval;
         }
     }
