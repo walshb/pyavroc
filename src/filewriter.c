@@ -31,14 +31,15 @@ AvroFileWriter_init(AvroFileWriter *self, PyObject *args, PyObject *kwds)
     PyObject *schema_json_bytes;
     FILE *file;
     char *codec = "null";
+    int block_size = PYAVROC_BLOCK_SIZE;
 
     self->pyfile = NULL;
     self->flags = 0;
     self->iface = NULL;
 
-    static char *kwlist[] = { "pyfile", "schema_json", "codec" };
+    static char *kwlist[] = { "pyfile", "schema_json", "codec", "block_size", NULL };
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "OO|s", kwlist, &pyfile, &schema_json, &codec)) {
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "OO|si", kwlist, &pyfile, &schema_json, &codec, &block_size)) {
         return -1;
     }
 
@@ -63,7 +64,7 @@ AvroFileWriter_init(AvroFileWriter *self, PyObject *args, PyObject *kwds)
     self->pyfile = pyfile;
     Py_INCREF(pyfile);
 
-    if (avro_file_writer_create_with_codec_fp(file, "pyfile", 0, self->schema, &self->writer, codec, PYAVROC_BLOCK_SIZE)) {
+    if (avro_file_writer_create_with_codec_fp(file, "pyfile", 0, self->schema, &self->writer, codec, block_size)) {
         PyErr_Format(PyExc_IOError, "Error opening file: %s", avro_strerror());
         return -1;
     }
