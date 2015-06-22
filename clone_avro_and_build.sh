@@ -16,10 +16,27 @@
 
 set -eux
 
+function abspath() {
+  pushd . > /dev/null;
+  if [ -d "$1" ]; then
+    cd "$1";
+    dirs -l +0;
+  else
+    cd "`dirname \"$1\"`";
+    cur_dir=`dirs -l +0`;
+    if [ "$cur_dir" == "/" ]; then
+      echo "$cur_dir`basename \"$1\"`";
+    else
+      echo "$cur_dir/`basename \"$1\"`";
+    fi;
+  fi;
+  popd > /dev/null;
+}
+
 STATIC=0
 [ "${1:-}" = '--static' ] && STATIC=1
 
-MYDIR=$(dirname $(readlink -f "$0"))
+MYDIR=$(dirname $(abspath "$0"))
 
 cd $MYDIR
 
@@ -89,7 +106,7 @@ cd build/lib*/pyavroc
 
 cd $MYDIR
 
-export PYTHONPATH=$(readlink -e build/lib*):$(readlink -e $AVROPY/build/lib*)
+export PYTHONPATH=$(abspath build/lib*):$(abspath $AVRO/lang/py/build/lib*)
 
 cd tests
 
