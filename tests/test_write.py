@@ -77,6 +77,43 @@ def test_write_union_obj():
     shutil.rmtree(dirname)
 
 
+def test_write_wrong_value():
+    schema = '''[{"name": "Rec1", "type": "record",
+"fields": [ {"name": "attr1", "type": "int"} ] },
+{"name": "Rec2", "type": "record",
+"fields": [ {"name": "attr2", "type": "string"} ]}
+]'''
+
+    dirname = tempfile.mkdtemp()
+    filename = os.path.join(dirname, 'test.avro')
+
+    avtypes = pyavroc.create_types(schema)
+
+    with pytest.raises(TypeError) as excinfo:
+        with open(filename, 'w') as fp:
+            writer = pyavroc.AvroFileWriter(fp, schema)
+            writer.write(avtypes.Rec1(attr1='x' * 120))
+            writer.close()
+
+    expected_error = "when writing to Rec1.attr1, invalid python object '" \
+                     + ('x' * 99) + ", an integer is required"
+
+    assert expected_error in str(excinfo.value)
+
+    with pytest.raises(TypeError) as excinfo:
+        with open(filename, 'w') as fp:
+            writer = pyavroc.AvroFileWriter(fp, schema)
+            writer.write(avtypes.Rec2(attr2=123))
+            writer.close()
+
+    expected_error = "when writing to Rec2.attr2, invalid python object 123," \
+                     " expected string or Unicode object, int found"
+
+    assert expected_error in str(excinfo.value)
+
+    shutil.rmtree(dirname)
+
+
 def test_write_closed():
     schema = '''[{"name": "Rec1", "type": "record",
 "fields": [ {"name": "attr1", "type": "int"} ] },
@@ -152,3 +189,35 @@ def test_write_union_of_dicts():
     assert read_recs == recs
 
     shutil.rmtree(dirname)
+
+
+def test_bad_file_argument():
+    try:
+        with tempfile.NamedTemporaryFile() as fp:
+            writer = pyavroc.AvroFileWriter(fp, '["null", "int"]')
+            writer.close()
+    except TypeError:
+        pass
+
+def test_write_wrong_type_primitive():
+    schema = '''{
+  "type": "record",
+  "name": "Obj",
+  "fields": [
+    {"name": "string", "type": "string"},
+    {"name": "number", "type": "int"}
+  ]
+}'''
+    avtypes = pyavroc.create_types(schema)
+    serializer = pyavroc.AvroSerializer(schema)
+
+    # this shouldn't raise
+    serializer.serialize(avtypes.Obj(string="pippo", number=1))
+    # place an int in place of a str
+    u = avtypes.Obj(string=1, number=1)
+    with pytest.raises(TypeError):
+        serializer.serialize(u)
+    # string in place of int
+    u = avtypes.Obj(string="a", number="a")
+    with pytest.raises(TypeError):
+        serializer.serialize(u)

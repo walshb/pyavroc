@@ -17,6 +17,7 @@
 #include "serializer.h"
 #include "convert.h"
 #include "structmember.h"
+#include "error.h"
 
 #define PYAVROC_BUFFER_SIZE (128 * 1024)
 
@@ -131,7 +132,7 @@ AvroSerializer_serialize(AvroSerializer *self, PyObject *args)
 
     if (rval) {
         avro_value_decref(&value);
-        PyErr_Format(PyExc_IOError, "Write error: %s", avro_strerror());
+        set_error_prefix("Write error: ");
         return NULL;
     }
 

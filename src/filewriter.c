@@ -17,6 +17,7 @@
 #include "filewriter.h"
 #include "convert.h"
 #include "structmember.h"
+#include "error.h"
 
 #define PYAVROC_BLOCK_SIZE (128 * 1024)
 
@@ -48,6 +49,7 @@ AvroFileWriter_init(AvroFileWriter *self, PyObject *args, PyObject *kwds)
     file = PyFile_AsFile(pyfile);
 
     if (file == NULL) {
+        PyErr_Format(PyExc_TypeError, "Error accessing file object.  Is it a file or file-like object?");
         return -1;
     }
 
@@ -141,7 +143,7 @@ AvroFileWriter_write(AvroFileWriter *self, PyObject *args)
     if (rval) {
         avro_value_decref(&value);
 
-        PyErr_Format(PyExc_IOError, "Error writing: %s", avro_strerror());
+        set_error_prefix("Error writing: ");
         return NULL;
     }
 

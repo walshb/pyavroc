@@ -38,7 +38,8 @@ ext_modules = [Extension('pyavroc/_pyavroc',
                           'src/convert.c',
                           'src/record.c',
                           'src/avroenum.c',
-                          'src/util.c'],
+                          'src/util.c',
+                          'src/error.c'],
                          libraries=['avro'] + extra_libs)]
 
 setup(name='pyavroc',

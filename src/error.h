@@ -14,16 +14,13 @@
  * limitations under the License.
  */
 
-#include "util.h"
+#ifndef INC_ERROR_H
+#define INC_ERROR_H
 
-#include "Python.h"
+void set_error_prefix(const char *format, ...);
 
-char *
-pymem_strdup(const char *str)
-{
-    char *res = (char *)PyMem_Malloc(strlen(str) + 1);
-    if (res != NULL) {
-        return strcpy(res, str);
-    }
-    return NULL;
-}
+int set_avro_error(int rval);
+
+int set_type_error(int rval, const PyObject *pyobj);
+
+#endif

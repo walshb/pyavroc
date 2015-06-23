@@ -17,6 +17,7 @@
 #include "filereader.h"
 #include "convert.h"
 #include "structmember.h"
+#include "error.h"
 
 static int
 AvroFileReader_init(AvroFileReader *self, PyObject *args, PyObject *kwds)
@@ -167,7 +168,7 @@ AvroFileReader_iternext(AvroFileReader *self)
         if (rval == EOF) {
             return NULL;
         }
-        PyErr_Format(PyExc_IOError, "Error reading: %s", avro_strerror());
+        set_error_prefix("Error reading: ");
         return NULL;
     }
 
