@@ -17,6 +17,6 @@
 #ifndef INC_UTIL_H
 #define INC_UTIL_H
 
-char *pymem_strdup(char *);
+char *pymem_strdup(const char *);
 
 #endif

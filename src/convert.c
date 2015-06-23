@@ -94,7 +94,7 @@ declare_types(ConvertInfo *info, avro_schema_t schema)
             for (i = 0; i < field_count; i++) {
                 PyObject *field_type = declare_types(info, avro_schema_record_field_get_by_index(schema, i));
                 /* this will INCREF, so takes hold of the object */
-                PyMapping_SetItemString(field_types, avro_schema_record_field_name(schema, i), field_type);
+                PyMapping_SetItemString(field_types, (char*)avro_schema_record_field_name(schema, i), field_type);
             }
             Py_DECREF(field_types);
             return record_type;
@@ -156,12 +156,12 @@ enum_to_python_object(ConvertInfo *info, avro_value_t *value)
     const char *name;
 
     avro_schema_t schema = avro_value_get_schema(value);
-    PyObject *type = (PyObject *)get_python_enum_type(info->types, schema);
+    PyObject *type = get_python_enum_type(info->types, schema);
 
     avro_value_get_enum(value, &val);
     name = avro_schema_enum_get(schema, val);
 
-    AvroEnum *obj = (AvroEnum *)PyObject_GetAttrString(type, name);
+    PyObject *obj = PyObject_GetAttrString(type, name);
 
     return obj;
 }

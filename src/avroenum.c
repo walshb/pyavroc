@@ -208,7 +208,7 @@ create_new_type(avro_schema_t schema)
         obj->value = i;
         obj->name = pymem_strdup(name);
 
-        PyMapping_SetItemString((PyObject *)type->tp_dict, name, (PyObject *)obj);
+        PyMapping_SetItemString((PyObject *)type->tp_dict, (char*)name, (PyObject *)obj);
         PyList_Append(symbols, (PyObject *)obj);
 
         Py_DECREF((PyObject *)obj);

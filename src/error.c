@@ -66,7 +66,7 @@ set_type_error(int rval, const PyObject *pyobj)
         return 0;
     }
 
-    pyrepr = PyObject_Repr(pyobj);
+    pyrepr = PyObject_Repr((PyObject*)pyobj);
 
     if (pyrepr != NULL) {
         set_error_prefix("invalid python object %.100s, ", PyString_AsString(pyrepr));
