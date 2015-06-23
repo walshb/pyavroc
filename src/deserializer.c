@@ -25,7 +25,7 @@ AvroDeserializer_init(AvroDeserializer *self, PyObject *args, PyObject *kwds)
 {
     int rval;
     PyObject *types = NULL;
-    PyObject *schema_json;
+    const char *schema_json;
     static char *kwlist[] = {"schema", "types", NULL};
 
     self->flags = 0;

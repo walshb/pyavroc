@@ -17,6 +17,7 @@
 #include "serializer.h"
 #include "convert.h"
 #include "structmember.h"
+#include "error.h"
 
 #define PYAVROC_BUFFER_SIZE (128 * 1024)
 

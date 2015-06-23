@@ -17,6 +17,7 @@
 #include "filewriter.h"
 #include "convert.h"
 #include "structmember.h"
+#include "error.h"
 
 #define PYAVROC_BLOCK_SIZE (128 * 1024)
 

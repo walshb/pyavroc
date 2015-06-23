@@ -19,7 +19,7 @@
 #include "Python.h"
 
 char *
-pymem_strdup(char *str)
+pymem_strdup(const char *str)
 {
     char *res = (char *)PyMem_Malloc(strlen(str) + 1);
     if (res != NULL) {

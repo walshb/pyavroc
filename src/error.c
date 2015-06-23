@@ -18,25 +18,33 @@
 #include "avro.h"
 
 void
-set_error_prefix(const char *prefix)
+set_error_prefix(const char *format, ...)
 {
     PyObject *type;  /* error type */
     PyObject *value;  /* error message */
     PyObject *traceback;  /* error traceback */
     PyObject *newmessage;
 
+    va_list argp;
+    va_start(argp, format);
+    newmessage = PyString_FromFormatV(format, argp);
+    va_end(argp);
+
+    if (!newmessage) {
+        PyErr_Warn(PyExc_RuntimeWarning, "Failed to format exception message");
+        newmessage = PyString_FromString(format);
+    }
+
     if (!PyErr_Occurred()) {
-        PyErr_SetString(PyExc_IOError, prefix);
+        PyErr_SetObject(PyExc_IOError, newmessage);
+        Py_DECREF(newmessage);
         return;
     }
 
     PyErr_Fetch(&type, &value, &traceback);
 
-    newmessage = PyString_FromString(prefix);
     PyString_ConcatAndDel(&newmessage, PyObject_Str(value));
 
-    Py_INCREF(type);
-    Py_XINCREF(traceback);
     PyErr_Restore(type, newmessage, traceback);  /* steals refs */
 }
 
@@ -50,7 +58,7 @@ set_avro_error(int rval)
 }
 
 int
-set_type_error(int rval, const PyObject *pyobj, const char *desired_type)
+set_type_error(int rval, const PyObject *pyobj)
 {
     PyObject* pyrepr;
 
@@ -58,14 +66,10 @@ set_type_error(int rval, const PyObject *pyobj, const char *desired_type)
         return 0;
     }
 
-    pyrepr = PyObject_Repr(pyobj);
+    pyrepr = PyObject_Repr((PyObject*)pyobj);
 
     if (pyrepr != NULL) {
-        char *repr = PyString_AsString(pyrepr);
-        char *prefix = (char *)PyMem_Malloc(256);
-        sprintf(prefix, "invalid python object %.100s, ", repr);
-        set_error_prefix(prefix);
-        PyMem_Free(prefix);
+        set_error_prefix("invalid python object %.100s, ", PyString_AsString(pyrepr));
         Py_DECREF(pyrepr);
     }  /* otherwise the error is already set, so leave it alone. */
 

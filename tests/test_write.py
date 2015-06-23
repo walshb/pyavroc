@@ -198,3 +198,26 @@ def test_bad_file_argument():
             writer.close()
     except TypeError:
         pass
+
+def test_write_wrong_type_primitive():
+    schema = '''{
+  "type": "record",
+  "name": "Obj",
+  "fields": [
+    {"name": "string", "type": "string"},
+    {"name": "number", "type": "int"}
+  ]
+}'''
+    avtypes = pyavroc.create_types(schema)
+    serializer = pyavroc.AvroSerializer(schema)
+
+    # this shouldn't raise
+    serializer.serialize(avtypes.Obj(string="pippo", number=1))
+    # place an int in place of a str
+    u = avtypes.Obj(string=1, number=1)
+    with pytest.raises(TypeError):
+        serializer.serialize(u)
+    # string in place of int
+    u = avtypes.Obj(string="a", number="a")
+    with pytest.raises(TypeError):
+        serializer.serialize(u)

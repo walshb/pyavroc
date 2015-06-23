@@ -43,7 +43,8 @@ create_types_func(PyObject *self, PyObject *args)
 
     info.types = PyObject_CallFunctionObjArgs((PyObject *)get_avro_types_type(), NULL);
     if (info.types == NULL) {
-        return -1;
+        // XXX: is the exception already set?
+        return NULL;
     }
 
     declare_types(&info, schema);

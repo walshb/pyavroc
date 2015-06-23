@@ -17,10 +17,10 @@
 #ifndef INC_ERROR_H
 #define INC_ERROR_H
 
-void set_error_prefix(const char *prefix);
+void set_error_prefix(const char *format, ...);
 
 int set_avro_error(int rval);
 
-int set_type_error(int rval, const PyObject *pyobj, const char *desired_type);
+int set_type_error(int rval, const PyObject *pyobj);
 
 #endif
