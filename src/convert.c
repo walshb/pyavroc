@@ -702,12 +702,11 @@ python_to_avro(ConvertInfo *info, PyObject *pyobj, avro_value_t *dest)
         return python_to_array(info, pyobj, dest);
     case AVRO_ENUM:
         {
-            int retval = validate(pyobj, avro_value_get_schema(dest));
-            return avro_value_set_enum(dest, index);
-            if (retval == -1L && PyErr_Occurred()) {
+            int index = validate(pyobj, avro_value_get_schema(dest));
+            if (index < 0 || PyErr_Occurred()) {
                 return set_type_error(EINVAL, pyobj);
             }
-            return set_avro_error(avro_value_set_enum(dest, retval));
+            return set_avro_error(avro_value_set_enum(dest, index));
         }
     case AVRO_FIXED:
         {
