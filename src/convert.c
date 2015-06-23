@@ -136,15 +136,11 @@ static PyObject *
 enum_to_python(ConvertInfo *info, avro_value_t *value)
 {
     int  val;
+    avro_schema_t schema;
 
     avro_value_get_enum(value, &val);
-
-    /*
-     * avro_schema_t  schema = avro_value_get_schema(value);
-     * symbol_name = avro_schema_enum_get(schema, val);
-     */
-
-    return PyInt_FromLong(val);
+    schema = avro_value_get_schema(value);
+    return PyString_FromString(avro_schema_enum_get(schema, val));
 }
 
 static PyObject *

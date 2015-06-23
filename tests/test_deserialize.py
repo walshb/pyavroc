@@ -14,7 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
+import json
 from cStringIO import StringIO
 
 import avro.schema
@@ -82,3 +82,16 @@ def test_big():
         {'name': long_str, 'office': long_str}
     )
     deserializer.deserialize(long_rec_bytes)
+
+
+def test_enum():
+    schema = '''{
+    "type": "enum",
+    "name": "suits",
+    "symbols": ["CLUBS", "DIAMONDS", "HEARTS", "SPADES"]
+    }'''
+    symbols = json.loads(schema)['symbols']
+    serializer = Serializer(schema)
+    deserializer = pyavroc.AvroDeserializer(schema)
+    for s in symbols:
+        assert deserializer.deserialize(serializer.serialize(s)) == s
