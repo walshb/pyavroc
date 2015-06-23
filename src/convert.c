@@ -632,7 +632,7 @@ int
 python_to_avro(ConvertInfo *info, PyObject *pyobj, avro_value_t *dest)
 {
     if (pyobj == NULL) {
-        PyErr_Format("Missing object.  Expected a %d\n", avro_value_get_type(dest));
+        PyErr_Format(PyExc_TypeError, "Missing object.  Expected a %d\n", avro_value_get_type(dest));
         return EINVAL;
     }
 
