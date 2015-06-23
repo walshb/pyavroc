@@ -17,6 +17,7 @@
 #include "filereader.h"
 #include "convert.h"
 #include "structmember.h"
+#include "error.h"
 
 static int
 AvroFileReader_init(AvroFileReader *self, PyObject *args, PyObject *kwds)
