@@ -74,3 +74,11 @@ def test_big():
     long_str = 'X' * (10 * 1024 * 1024)
     avro_obj = avtypes.User(name=long_str, office=long_str)
     serializer.serialize(avro_obj)
+
+
+def test_serialize_union():
+    schema = '["string", "null"]'
+    serializer = pyavroc.AvroSerializer(schema)
+    deserializer = Deserializer(schema)
+    for datum in "foo", u"foo", None:
+        assert deserializer.deserialize(serializer.serialize(datum)) == datum

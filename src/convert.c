@@ -449,7 +449,7 @@ get_branch_index(ConvertInfo *info, PyObject *pyobj, avro_schema_t schema)
     if (pyobj == Py_None) {
         typename = "null";
     } else {
-        if (PyString_CheckExact(pyobj)) {
+        if (PyString_CheckExact(pyobj) || PyUnicode_CheckExact(pyobj)) {
             typename = "string";
         } else if (PyList_CheckExact(pyobj)) {
             typename = "array";
