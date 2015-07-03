@@ -25,9 +25,8 @@ except ImportError:
 
 import pyavroc
 
-if sys.version_info < (3,):
-    import avro.schema
-    from avro.io import DatumReader, BinaryDecoder
+import avro.schema
+from avro.io import DatumReader, BinaryDecoder
 
 
 SCHEMA = '''{
@@ -44,7 +43,10 @@ SCHEMA = '''{
 class Deserializer(object):
 
     def __init__(self, schema_str):
-        schema = avro.schema.parse(schema_str)
+        if sys.version_info >= (3,):
+            schema = avro.schema.Parse(schema_str)
+        else:
+            schema = avro.schema.parse(schema_str)
         self.reader = DatumReader(schema)
 
     def deserialize(self, rec_bytes):
@@ -58,13 +60,12 @@ def test_exc():
         pyavroc.AvroSerializer('NOT_A_VALID_JSON')
 
 
-@pytest.mark.skipif('sys.version_info >= (3,)', reason='py-avro broken for Python3')
 def test_serialize_record():
     n_recs = 10
     avtypes = pyavroc.create_types(SCHEMA)
     serializer = pyavroc.AvroSerializer(SCHEMA)
     deserializer = Deserializer(SCHEMA)
-    for i in xrange(n_recs):
+    for i in range(n_recs):
         name, office = "name-%d" % i, "office-%d" % i
         avro_obj = avtypes.User(name=name, office=office)
         rec_bytes = serializer.serialize(avro_obj)
@@ -75,7 +76,6 @@ def test_serialize_record():
         assert deser_rec['favorite_number'] is None
 
 
-@pytest.mark.skipif('sys.version_info >= (3,)', reason='py-avro broken for Python3')
 def test_big():
     avtypes = pyavroc.create_types(SCHEMA)
     serializer = pyavroc.AvroSerializer(SCHEMA)

@@ -81,7 +81,7 @@ static int
 is_open(AvroFileWriter *self)
 {
     if (self->pyfile != NULL) {
-        FILE *file = PyFile_AsFile(self->pyfile);
+        FILE *file = pyfile_to_file(self->pyfile, "w");
         return (file != NULL && (self->flags & AVROFILE_READER_OK));
     }
 

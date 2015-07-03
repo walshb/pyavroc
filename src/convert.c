@@ -167,7 +167,7 @@ enum_to_python(ConvertInfo *info, avro_value_t *value)
         return NULL;
     }
 
-    return PyString_InternFromString(name);
+    return chars_to_pystring(name);
 }
 
 static PyObject *
@@ -493,7 +493,7 @@ get_branch_index(ConvertInfo *info, PyObject *pyobj, avro_schema_t schema)
                                                              &branch_index,
                                                              "double");
         }
-        else if (PyInt_CheckExact(pyobj)) { /* may also be Python int vs long */
+        else if (is_pyint(pyobj)) { /* may also be Python int vs long */
             branch_schema = avro_schema_union_branch_by_name(schema,
                                                              &branch_index,
                                                              "long");
@@ -523,20 +523,20 @@ validate(PyObject *pyobj, avro_schema_t schema) {
     case AVRO_BOOLEAN:
         return PyBool_Check(pyobj) ? 0 : -1;
     case AVRO_BYTES:
-        return PyString_Check(pyobj) ? 0 : -1;
+        return is_pybytes(pyobj) ? 0 : -1;
     case AVRO_STRING:
-        return (PyString_Check(pyobj) || PyUnicode_Check(pyobj)) ? 0 : -1;
+        return is_pystring(pyobj) ? 0 : -1;
     case AVRO_INT32:
     case AVRO_INT64:
         /* FIXME: discriminate by comparing value to 32/64 bit limits */
-        return (PyInt_Check(pyobj) || PyLong_Check(pyobj)) ? 0 : -1;
+        return (is_pyint(pyobj) || PyLong_Check(pyobj)) ? 0 : -1;
     case AVRO_FLOAT:
     case AVRO_DOUBLE:
-        return (PyInt_Check(pyobj) || PyLong_Check(pyobj) ||
+        return (is_pyint(pyobj) || PyLong_Check(pyobj) ||
                 PyFloat_Check(pyobj)) ? 0 : -1;
     case AVRO_FIXED:
         /* FIXME: check that string size == expected size */
-        return PyString_Check(pyobj) ? 0 : -1;
+        return is_pystring(pyobj) ? 0 : -1;
     case AVRO_ENUM:
         {
             if (is_pystring(pyobj)) {
@@ -569,7 +569,7 @@ validate(PyObject *pyobj, avro_schema_t schema) {
             Py_ssize_t pos = 0;
             if (!PyDict_Check(pyobj)) return -1;
             while (PyDict_Next(pyobj, &pos, &key, &value))
-                if (!PyString_Check(key) || validate(value, subschema) < 0)
+                if (!is_pystring(key) || validate(value, subschema) < 0)
                     return -1;
             return 0;
         }

@@ -14,15 +14,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import sys
+
 from pyavroc import validate
 
 # Based on the test_io module from the official Python API.  One
 # difference is that the C-level JSON parser expects a top-level '{'
 # or '[', so primitive schemas must be passed as 1-element unions.
-TEST_CASES = (
+TEST_CASES = [
     ('["null"]', None, 0),
     ('["boolean"]', True, 0),
-    ('["string"]', unicode('adsfasdf09809dsf-=adsf'), 0),
+    ('["string"]', u'adsfasdf09809dsf-=adsf', 0),
     ('["bytes"]', '12345abcd', 0),
     ('["int"]', 1234, 0),
     ('["long"]', 1234, 0),
@@ -35,13 +37,15 @@ TEST_CASES = (
     ('{"type": "map", "values": "long"}', {'a': 1, 'b': 3, 'c': 2}, 0),
     ('["string", "null", "long"]', 'spam', 0),
     ('["string", "null", "long"]', None, 1),
-    ('["string", "null", "long"]', 42L, 2),
     ("""\
     {"type": "record",
     "name": "Test",
     "fields": [{"name": "f", "type": "long"}]}
     """, {'f': 5}, 0),
-)
+]
+
+if sys.version_info < (3,):
+    TEST_CASES.append(('["string", "null", "long"]', long(42), 2))
 
 
 def test_validate_schemas():

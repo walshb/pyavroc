@@ -33,11 +33,14 @@ void pystring_concat(PyObject **, const char*);
 
 void pystring_concat_repr(PyObject **, PyObject *);
 
+void pystring_concat_str(PyObject **, PyObject *);
+
 #if PY_MAJOR_VERSION >= 3
 #define long_to_pyint(L) PyLong_FromLong(L)
 #define pyint_to_long(P) PyLong_AsLong(P)
 #define is_pystring(P) PyUnicode_CheckExact(P)
 #define is_pyint(P) PyLong_Check(P)
+#define is_pybytes(P) PyBytes_Check(P)
 #define chars_to_pystring(C) PyUnicode_FromString(C)
 #define chars_size_to_pystring(C, N) PyUnicode_FromStringAndSize(C, N)
 #define chars_size_to_pybytes(C, N) PyBytes_FromStringAndSize(C, N)
@@ -46,8 +49,9 @@ void pystring_concat_repr(PyObject **, PyObject *);
 #else
 #define long_to_pyint(L) PyInt_FromLong(L)
 #define pyint_to_long(P) PyInt_AsLong(P)
-#define is_pystring(P) PyString_CheckExact(P)
+#define is_pystring(P) (PyString_CheckExact(P) || PyUnicode_CheckExact(P))
 #define is_pyint(P) PyInt_Check(P)
+#define is_pybytes(P) PyString_Check(P)
 #define chars_to_pystring(C) PyString_FromString(C)
 #define chars_size_to_pystring(C, N) PyString_FromStringAndSize(C, N)
 #define chars_size_to_pybytes(C, N) PyString_FromStringAndSize(C, N)

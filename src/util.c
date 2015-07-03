@@ -74,3 +74,17 @@ pystring_concat_repr(PyObject **pystr, PyObject *obj)
     PyString_ConcatAndDel(pystr, PyObject_Repr(obj));
 #endif
 }
+
+void
+pystring_concat_str(PyObject **pystr, PyObject *obj)
+{
+#if PY_MAJOR_VERSION >= 3
+    PyObject *repr = PyObject_Str(obj);
+    PyObject *newstr = PyUnicode_Concat(*pystr, repr);
+    Py_DECREF(repr);
+    Py_DECREF(*pystr);
+    *pystr = newstr;
+#else
+    PyString_ConcatAndDel(pystr, PyObject_Str(obj));
+#endif
+}
