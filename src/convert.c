@@ -539,11 +539,12 @@ validate(PyObject *pyobj, avro_schema_t schema) {
             PyObject *key, *value;
             Py_ssize_t pos = 0;
             if (!PyDict_Check(pyobj)) return -1;
-            while (PyDict_Next(pyobj, &pos, &key, &value))
+            while (PyDict_Next(pyobj, &pos, &key, &value)) {
                 if (!(PyString_Check(key) || PyUnicode_Check(key)))
                     return -1;
                 if (validate(value, subschema) < 0)
                     return -1;
+            }
             return 0;
         }
     case AVRO_UNION:
