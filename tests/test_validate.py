@@ -32,7 +32,7 @@ TEST_CASES = (
     ('{"type": "enum", "name": "Test", "symbols": ["A", "B"]}', 'A', 0),
     ('{"type": "enum", "name": "Test", "symbols": ["A", "B"]}', 'B', 1),
     ('{"type": "array", "items": "long"}', [1, 3, 2], 0),
-    ('{"type": "map", "values": "long"}', {'a': 1, 'b': 3, 'c': 2}, 0),
+    ('{"type": "map", "values": "long"}', {'a': 1, 'b': 3, u'c': 2}, 0),
     ('["string", "null", "long"]', 'spam', 0),
     ('["string", "null", "long"]', None, 1),
     ('["string", "null", "long"]', 42L, 2),

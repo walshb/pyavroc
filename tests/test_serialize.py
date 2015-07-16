@@ -82,3 +82,15 @@ def test_serialize_union():
     deserializer = Deserializer(schema)
     for datum in "foo", u"foo", None:
         assert deserializer.deserialize(serializer.serialize(datum)) == datum
+
+
+def test_unicode_map_keys():
+    schema = """\
+    {"type": "record",
+    "name": "foo",
+    "fields": [{"name": "bar",
+                "type": ["null", {"type": "map", "values": "string"}]}]}
+    """
+    serializer = pyavroc.AvroSerializer(schema)
+    rec_bytes = serializer.serialize({"bar": {"k": "v"}})
+    assert serializer.serialize({"bar": {u"k": "v"}}) == rec_bytes
