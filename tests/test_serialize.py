@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
 # Copyright 2015 CRS4
 #
@@ -94,3 +95,17 @@ def test_unicode_map_keys():
     serializer = pyavroc.AvroSerializer(schema)
     rec_bytes = serializer.serialize({"bar": {"k": "v"}})
     assert serializer.serialize({"bar": {u"k": "v"}}) == rec_bytes
+
+
+def test_serialize_utf8_string():
+    schema = '["string"]'
+    serializer = pyavroc.AvroSerializer(schema)
+    deserializer = Deserializer(schema)
+
+    datum = "barà"
+    rec_bytes = serializer.serialize(datum)
+    assert deserializer.deserialize(rec_bytes) == unicode(datum, "utf-8")
+
+    datum = u"barà"
+    rec_bytes = serializer.serialize(datum)
+    assert deserializer.deserialize(rec_bytes) == datum

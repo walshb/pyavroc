@@ -706,11 +706,27 @@ python_to_avro(ConvertInfo *info, PyObject *pyobj, avro_value_t *dest)
     case AVRO_STRING:
         {
             char *buf;
+            int freeutf8 = 0;
+            int retval;
             Py_ssize_t len;
-            if (PyString_AsStringAndSize(pyobj, &buf, &len) < 0) {
+            PyObject *aux;
+
+            if (PyUnicode_Check(pyobj)) {
+                aux = PyUnicode_AsUTF8String(pyobj);
+                freeutf8 = 1;
+            }
+            else {
+                aux = pyobj;
+            }
+
+            if (PyString_AsStringAndSize(aux, &buf, &len) < 0) {
                 return set_type_error(EINVAL, pyobj);
             }
-            return set_avro_error(avro_value_set_string_len(dest, buf, len + 1));
+            retval = set_avro_error(avro_value_set_string_len(dest, buf, len + 1));
+            if (freeutf8) {
+                Py_DECREF(aux);
+            }
+            return retval;
         }
     case AVRO_ARRAY:
         return python_to_array(info, pyobj, dest);
