@@ -4,4 +4,4 @@ python:
   - "2.7"
   - "3.4"
 script:
-  - ./clone_avro_and_build.sh --static
+  - ./clone_avro_and_build.sh --static && ./run_benchmark.sh
