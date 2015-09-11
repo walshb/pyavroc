@@ -120,3 +120,26 @@ def test_serialize_utf8_string():
     datum = u"barà"
     rec_bytes = serializer.serialize(datum)
     assert deserializer.deserialize(rec_bytes) == datum
+
+def test_serialize_reuse_record_type():
+    schema = """\
+    { "type": "record",
+      "name": "foo",
+      "namespace": "org.pyavroc",
+      "fields": [
+        { "name": "c1",
+         "type": { "type": "record", "name": "Contig", "fields": [ { "name": "contigName", "type": "string" } ] }
+        },
+        { "name": "c2",
+          "type": [ "null", "Contig" ]
+        }
+      ]
+    }
+    """
+    ser = pyavroc.AvroSerializer(schema)
+    datum = {
+            "c1": { "contigName": "contig1" },
+            "c2": { "contigName": "contig2" }
+            }
+    obytes = ser.serialize(datum)
+    assert obytes
