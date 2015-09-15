@@ -62,7 +62,9 @@ void
 pystring_concat(PyObject **pystr, const char *chars)
 {
 #if PY_MAJOR_VERSION >= 3
-    PyObject *newstr = PyUnicode_Concat(*pystr, PyUnicode_FromString(chars));
+    PyObject *str = PyUnicode_FromString(chars);
+    PyObject *newstr = PyUnicode_Concat(*pystr, str);
+    Py_DECREF(str);
     Py_DECREF(*pystr);
     *pystr = newstr;
 #else
