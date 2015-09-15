@@ -735,13 +735,15 @@ python_to_avro(ConvertInfo *info, PyObject *pyobj, avro_value_t *dest)
         {
             char *buf;
             Py_ssize_t len;
+            int rval;
             PyObject *pybytes = pystring_to_pybytes(pyobj);
             if (pybytes == NULL || pybytes_to_chars_size(pybytes, &buf, &len) < 0) {
                 Py_XDECREF(pybytes);
                 return set_type_error(EINVAL, pyobj);
             }
+            rval = avro_value_set_string_len(dest, buf, len + 1);
             Py_DECREF(pybytes);
-            return set_avro_error(avro_value_set_string_len(dest, buf, len + 1));
+            return set_avro_error(rval);
         }
     case AVRO_ARRAY:
         return python_to_array(info, pyobj, dest);

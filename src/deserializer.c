@@ -14,6 +14,9 @@
  * limitations under the License.
  */
 
+/* PyArg_ParseTuple "s#" needs this */
+#define PY_SSIZE_T_CLEAN
+
 #include "deserializer.h"
 #include "convert.h"
 #include "structmember.h"
@@ -51,7 +54,7 @@ AvroDeserializer_init(AvroDeserializer *self, PyObject *args, PyObject *kwds)
         return -1;
     }
 
-    self->datum_reader = avro_reader_memory(0, 0);
+    self->datum_reader = avro_reader_memory(NULL, 0);
     if (!self->datum_reader) {
         PyErr_NoMemory();
         return -1;
@@ -109,7 +112,7 @@ AvroDeserializer_deserialize(AvroDeserializer *self, PyObject *args)
     int rval;
     avro_value_t value;
     char *buffer = NULL;
-    size_t buffer_size;
+    Py_ssize_t buffer_size;
     PyObject *result;
 
     if (!PyArg_ParseTuple(args, "s#", &buffer, &buffer_size)) {
