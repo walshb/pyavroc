@@ -74,6 +74,8 @@ rm -rf build dist
 export PYAVROC_CFLAGS="-I$AVRO/dist/include"
 if [ $STATIC -ne 0 ]
 then
+    mkdir -p pyavroc/avro
+    cp -v local_avro/NOTICE.txt pyavroc/avro/
     # a bit cheesy: get libraries from the cmake link.txt file
     export PYAVROC_LIBS=$(tr ' ' '\n' <$AVRO/build/src/CMakeFiles/avro-shared.dir/link.txt | grep '^-l' | cut -c3-)
     export LDFLAGS="-L$AVRO/dist/lib"
@@ -84,7 +86,6 @@ fi
 $PYTHON setup.py build
 
 cd build/lib*/pyavroc
-[ -f _pyavroc.so ] || ln -s _pyavroc.*.so _pyavroc.so
 
 cd $MYDIR
 

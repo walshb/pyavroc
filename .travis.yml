@@ -5,3 +5,11 @@ python:
   - "3.4"
 script:
   - ./clone_avro_and_build.sh --static && ./run_benchmark.sh
+deploy:
+  provider: pypi
+  user: byhiras
+  password:
+    secure: d4n+k+/WJrJmhQUMoxk2PWK//BtimgzzJGKHuxwqOuyX3oNf8La0sUxy72MwUeucVEjNrzUSwWLm0OePV2n/5TWFxfDaflFSk6tUMSr/qUb5izOS7hqs5BoFxjQUjyYHbQv75odyjxarMvoxiqhh9I9DbFzb3g4Dnqs8JZndGTA=
+  distributions: "sdist bdist_egg"
+  on:
+    tags: true
