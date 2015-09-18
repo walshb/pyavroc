@@ -63,4 +63,5 @@ setup(name='pyavroc',
       ],
       tests_require=['pytest'],
       packages=['pyavroc'],
+      package_data={'pyavroc': ['avro/NOTICE.txt']},  # in case it was included
       ext_modules=ext_modules)
