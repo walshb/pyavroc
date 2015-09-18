@@ -69,4 +69,4 @@ def test_validate_recursive():
                                      {"name": "cdr", "type": "Lisp"}]}]}]}
     """
     datum = {'value': {'car': {'value': 'head'}, 'cdr': {'value': None}}}
-    assert validate(datum, schema)
+    assert validate(datum, schema) == 0

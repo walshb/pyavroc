@@ -603,6 +603,8 @@ validate(PyObject *pyobj, avro_schema_t schema) {
             }
             return 0;
         }
+    case AVRO_LINK:
+        return validate(pyobj, avro_schema_link_target(schema));
     default:
         return -1;
     }
