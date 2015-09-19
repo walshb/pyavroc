@@ -3,6 +3,7 @@ python:
   - "2.6"
   - "2.7"
   - "3.4"
+  - "3.5"
 script:
   - ./clone_avro_and_build.sh --static && ./run_benchmark.sh
 deploy:
