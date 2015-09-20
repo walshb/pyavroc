@@ -51,6 +51,8 @@ def test_record_init_no_args():
     assert v.name is None
     assert v.favorite_number is None
     assert v.favorite_color is None
+    assert 'User(name=None, favorite_number=None, favorite_color=None)' in str(v)
+    assert v == v
 
 
 def test_record_init_some_args():

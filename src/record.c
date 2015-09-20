@@ -42,6 +42,10 @@ avro_record_init(AvroRecord *self, PyObject *args, PyObject *kwds)
         val = PySequence_GetItem(args, i);
         self->fields[i] = val;
     }
+    for ( ; i < nfields; i++) {
+        Py_INCREF(Py_None);
+        self->fields[i] = Py_None;
+    }
 
     if (kwds != NULL) {
         nkwds = PyMapping_Length(kwds);
