@@ -24,10 +24,12 @@ version_str = open('pyavroc/_version.py').read().strip()
 version = version_str.split("'")[1]
 
 try:
-    long_description = subprocess.check_output(['pandoc', '-t', 'rst',
-                                                '-o', '-', 'README.md'])
+    long_description \
+        = subprocess.Popen(['pandoc', '-t', 'rst', '-o', '-', 'README.md'],
+                           stdout=subprocess.PIPE).communicate()[0]
     sys.stderr.write('pandoc says %s\n' % (long_description,))
 except OSError:
+    sys.stderr.write('foobar!\n')
     long_description = open('README.md').read()
 
 # bdist --format=rpm calls this with CFLAGS overridden,
