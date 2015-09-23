@@ -16,10 +16,19 @@
 
 import os
 from setuptools import setup, Extension
+import subprocess
+import sys
 
 # can't import because we don't have shared library built yet.
 version_str = open('pyavroc/_version.py').read().strip()
 version = version_str.split("'")[1]
+
+try:
+    long_description = subprocess.check_output(['pandoc', '-t', 'rst',
+                                                '-o', '-', 'README.md'])
+    sys.stderr.write('pandoc says %s\n' % (long_description,))
+except OSError:
+    long_description = open('README.md').read()
 
 # bdist --format=rpm calls this with CFLAGS overridden,
 # so have to use PYAVROC_CFLAGS
@@ -49,7 +58,7 @@ setup(name='pyavroc',
       author='Ben Walsh',
       author_email='ben.walsh@byhiras.com',
       description='Avro file reader/writer',
-      long_description=open('README.md').read(),
+      long_description=long_description,
       keywords='avro serialization',
       platforms='any',
       classifiers = [
