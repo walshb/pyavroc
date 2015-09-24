@@ -1,6 +1,8 @@
 pyavroc
 =======
 
+[![Build Status](https://travis-ci.org/Byhiras/pyavroc.svg?branch=master)](https://travis-ci.org/Byhiras/pyavroc)
+
 An Avro file reader/writer for Python.
 
 Usage
