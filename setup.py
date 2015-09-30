@@ -25,7 +25,7 @@ version = version_str.split("'")[1]
 try:
     long_description \
         = subprocess.Popen(['pandoc', '-t', 'rst', '-o', '-', 'README.md'],
-                           stdout=subprocess.PIPE).communicate()[0]
+                           stdout=subprocess.PIPE).communicate()[0].decode('utf-8')
 except OSError:
     long_description = open('README.md').read()
 
