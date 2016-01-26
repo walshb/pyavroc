@@ -64,15 +64,33 @@ pyfile_to_file(PyObject *pyfile, const char *mode)
 #endif
 }
 
+#if PY_MAJOR_VERSION >= 3
+/*
+ * Private helper implementing logic akin to Python 2's PyString_ConcatAndDel.
+ * Concats two unicode strings and sets pystr to point to the new resulting
+ * string;  then it dereferences both original parameters.
+ *
+ * In case of error it sets pystr to NULL and sets a Python exception.
+ */
+static void
+concat_unicode_and_decref_all(PyObject** pystr, PyObject* obj)
+{
+    PyObject *newstr = NULL;
+    if (obj) {
+        newstr = PyUnicode_Concat(*pystr, obj);
+        Py_DECREF(obj);
+    }
+    Py_XDECREF(*pystr);
+    *pystr = newstr;
+
+}
+#endif
+
 void
 pystring_concat(PyObject **pystr, const char *chars)
 {
 #if PY_MAJOR_VERSION >= 3
-    PyObject *str = PyUnicode_FromString(chars);
-    PyObject *newstr = PyUnicode_Concat(*pystr, str);
-    Py_DECREF(str);
-    Py_DECREF(*pystr);
-    *pystr = newstr;
+    concat_unicode_and_decref_all(pystr, PyUnicode_FromString(chars));
 #else
     PyString_ConcatAndDel(pystr, PyString_FromString(chars));
 #endif
@@ -82,11 +100,7 @@ void
 pystring_concat_repr(PyObject **pystr, PyObject *obj)
 {
 #if PY_MAJOR_VERSION >= 3
-    PyObject *repr = PyObject_Repr(obj);
-    PyObject *newstr = PyUnicode_Concat(*pystr, repr);
-    Py_DECREF(repr);
-    Py_DECREF(*pystr);
-    *pystr = newstr;
+    concat_unicode_and_decref_all(pystr, PyObject_Repr(obj));
 #else
     PyString_ConcatAndDel(pystr, PyObject_Repr(obj));
 #endif
@@ -96,11 +110,7 @@ void
 pystring_concat_str(PyObject **pystr, PyObject *obj)
 {
 #if PY_MAJOR_VERSION >= 3
-    PyObject *repr = PyObject_Str(obj);
-    PyObject *newstr = PyUnicode_Concat(*pystr, repr);
-    Py_DECREF(repr);
-    Py_DECREF(*pystr);
-    *pystr = newstr;
+    concat_unicode_and_decref_all(pystr, PyObject_Str(obj));
 #else
     PyString_ConcatAndDel(pystr, PyObject_Str(obj));
 #endif
