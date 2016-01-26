@@ -270,3 +270,13 @@ def test_union_with_bool():
         read_recs = list(reader)
         attr_values = [ r.attr1 for r in read_recs ]
         assert attr_values == [ None, True, True, False ]
+
+def test_bad_file_type():
+    irrelevant = '''{
+        "type": "boolean",
+        "name": "x"
+        }'''
+    av_types = pyavroc.create_types(irrelevant)
+    with pytest.raises(TypeError):
+        # try to open a reader on a list
+        reader = pyavroc.AvroFileReader(list(), types=av_types)

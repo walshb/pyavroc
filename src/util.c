@@ -43,6 +43,12 @@ PyObject *pystring_to_pybytes(PyObject *pystr)
 #endif
 }
 
+/**
+ * Return the file object associated with p as a FILE*, if possible.
+ *
+ * Works with Python 2 and 3.  Note that it does not set a Python exception
+ * if the conversion fails.
+ */
 FILE *
 pyfile_to_file(PyObject *pyfile, const char *mode)
 {

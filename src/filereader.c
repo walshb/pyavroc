@@ -44,6 +44,7 @@ AvroFileReader_init(AvroFileReader *self, PyObject *args, PyObject *kwds)
     file = pyfile_to_file(pyfile, "rb");
 
     if (file == NULL) {
+        PyErr_Format(PyExc_TypeError, "Error accessing file object.  Is it a file or file-like object?");
         return -1;
     }
 
