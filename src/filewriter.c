@@ -62,7 +62,7 @@ AvroFileWriter_init(AvroFileWriter *self, PyObject *args, PyObject *kwds)
 
     if (avro_file_writer_create_with_codec_fp(file, "pyfile", 0, self->schema, &self->writer, "null", PYAVROC_BLOCK_SIZE)) {
         PyErr_Format(PyExc_IOError, "Error opening file: %s", avro_strerror());
-        return -1;
+        goto exit_with_error;
     }
 
     self->flags |= AVROFILE_READER_OK;
@@ -71,10 +71,14 @@ AvroFileWriter_init(AvroFileWriter *self, PyObject *args, PyObject *kwds)
 
     if (self->iface == NULL) {
         PyErr_SetString(PyExc_IOError, "Error creating generic class interface");
-        return -1;
+        goto exit_with_error;
     }
 
     return 0;
+
+exit_with_error:
+    Py_DECREF(pyfile);
+    return -1;
 }
 
 static int

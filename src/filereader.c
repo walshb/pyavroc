@@ -53,7 +53,7 @@ AvroFileReader_init(AvroFileReader *self, PyObject *args, PyObject *kwds)
 
     if (avro_file_reader_fp(file, "pyfile", 0, &self->reader)) {
         PyErr_Format(PyExc_IOError, "Error opening file: %s", avro_strerror());
-        return -1;
+        goto exit_with_error;
     }
 
     self->flags |= AVROFILE_READER_OK;
@@ -62,7 +62,7 @@ AvroFileReader_init(AvroFileReader *self, PyObject *args, PyObject *kwds)
 
     if (self->schema == NULL) {
         PyErr_Format(PyExc_IOError, "Error reading schema: %s", avro_strerror());
-        return -1;
+        goto exit_with_error;
     }
 
     len = 256;
@@ -84,7 +84,7 @@ AvroFileReader_init(AvroFileReader *self, PyObject *args, PyObject *kwds)
 
     if (rval) {
         PyErr_Format(PyExc_IOError, "Error saving schema: %s", avro_strerror());
-        return -1;
+        goto exit_with_error;
     }
 
     self->flags |= AVROFILE_SCHEMA_OK;
@@ -93,7 +93,7 @@ AvroFileReader_init(AvroFileReader *self, PyObject *args, PyObject *kwds)
 
     if (self->iface == NULL) {
         PyErr_SetString(PyExc_IOError, "Error creating generic class interface");
-        return -1;
+        goto exit_with_error;
     }
 
     if (types != NULL && PyObject_IsTrue(types)) {
@@ -104,7 +104,7 @@ AvroFileReader_init(AvroFileReader *self, PyObject *args, PyObject *kwds)
         } else {
             self->info.types = PyObject_CallFunctionObjArgs((PyObject *)get_avro_types_type(), NULL);
             if (self->info.types == NULL) {
-                return -1;
+                goto exit_with_error;
             }
             declare_types(&self->info, self->schema);
         }
@@ -113,6 +113,10 @@ AvroFileReader_init(AvroFileReader *self, PyObject *args, PyObject *kwds)
     }
 
     return 0;
+
+exit_with_error:
+    Py_DECREF(pyfile);
+    return -1;
 }
 
 static int
