@@ -42,7 +42,7 @@ set_error_prefix(const char *format, ...)
     }
 
     if (!PyErr_Occurred()) {
-        PyErr_SetObject(PyExc_IOError, newmessage || Py_None);
+        PyErr_SetObject(PyExc_IOError, (newmessage ? newmessage : Py_None));
         Py_XDECREF(newmessage);
         return;
     }
