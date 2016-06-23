@@ -14,10 +14,6 @@ before_install:
   - uname -a
   - lsb_release -a
 install:
-  - PANDOC_DEB=$(curl -s https://api.github.com/repos/jgm/pandoc/releases/latest | jq -r '.assets[] | select(.name|contains(".deb")) | .browser_download_url')
-  - curl -Lo pandoc.deb $PANDOC_DEB
-  - dpkg-deb -x pandoc.deb pandoc
-  - export PATH=$(readlink -f pandoc/usr/bin):$PATH
   - pandoc --version
   - pip install pytest>=2.7.3 --upgrade
 script:
