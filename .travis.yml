@@ -14,8 +14,9 @@ before_install:
   - uname -a
   - lsb_release -a
 install:
-  - PANDOC_DEB=$(curl -s https://api.github.com/repos/jgm/pandoc/releases/latest | jq -r '.assets[] | select(.name|contains(".deb")) | .browser_download_url')
-  - curl -Lo pandoc.deb $PANDOC_DEB
+  - for TRY in $(seq 5); do PANDOC_META=$(curl --retry 5 https://api.github.com/repos/jgm/pandoc/releases/latest); [ -z "$PANDOC_META" ] || break; sleep 10; done; [ -n "$PANDOC_META" ] || exit 1
+  - PANDOC_URL=$(echo "$PANDOC_META" | jq -r '.assets[] | select(.name|contains(".deb")) | .browser_download_url')
+  - curl -Lo pandoc.deb $PANDOC_URL
   - dpkg-deb -x pandoc.deb pandoc
   - export PATH=$(readlink -f pandoc/usr/bin):$PATH
   - pandoc --version
