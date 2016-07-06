@@ -38,7 +38,7 @@ set_error_prefix(const char *format, ...)
 
     if (!newmessage) {
         PyErr_Warn(PyExc_RuntimeWarning, "Failed to format exception message");
-        newmessage = chars_to_pystring(format);  // could fail returning NULL
+        newmessage = chars_to_pystring(format);  /* could fail returning NULL */
     }
 
     if (!PyErr_Occurred()) {
@@ -47,13 +47,14 @@ set_error_prefix(const char *format, ...)
         return;
     }
     else if (!newmessage) {
-        // We were unable to format any sort of new message, but we set a warning
-        // regarding that problem (above).  The exception is already set, so the sanest thing
-        // to do seems to be to give up and leave the error as it is.
+        /* We were unable to format any sort of new message, but we set a warning
+           regarding that problem (above).  The exception is already set, so the sanest thing
+           to do seems to be to give up and leave the error as it is.
+         */
         return;
     }
 
-    // we have a new message and an error is already set
+    /* we have a new message and an error is already set */
     PyErr_Fetch(&type, &value, &traceback);
     newtype = type;
 
@@ -64,7 +65,7 @@ set_error_prefix(const char *format, ...)
         Py_XDECREF(value);
     }
     else {
-        // Don't have a new message.  Keep the old one
+        /* Don't have a new message.  Keep the old one */
         newmessage = value;
     }
 
