@@ -401,6 +401,11 @@ python_to_array(ConvertInfo *info, PyObject *pyobj, avro_value_t *dest)
     Py_ssize_t i;
     Py_ssize_t element_count;
 
+    if (!PyList_Check(pyobj)) {
+        PyErr_Format(PyExc_TypeError, "expected list, %s found", pyobj->ob_type->tp_name);
+        return -1;
+    }
+
     element_count = PyObject_Length(pyobj);
 
     if (element_count < 0) {
@@ -431,6 +436,11 @@ python_to_map(ConvertInfo *info, PyObject *pyobj, avro_value_t *dest)
     size_t element_count;
     PyObject *keys;
     PyObject *vals;
+
+    if (!PyMapping_Check(pyobj)) {
+        PyErr_Format(PyExc_TypeError, "expected dict-like object, %s found", pyobj->ob_type->tp_name);
+        return -1;
+    }
 
     element_count = PyMapping_Length(pyobj);
 

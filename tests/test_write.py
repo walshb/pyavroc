@@ -82,7 +82,11 @@ def test_write_wrong_value():
     schema = '''[{"name": "Rec1", "type": "record",
 "fields": [ {"name": "attr1", "type": "int"} ] },
 {"name": "Rec2", "type": "record",
-"fields": [ {"name": "attr2", "type": "string"} ]}
+"fields": [ {"name": "attr2", "type": "string"} ] },
+{"name": "Rec3", "type": "record",
+"fields": [ {"name": "attr3", "type": {"type": "map", "values": "int"}} ] },
+{"name": "Rec4", "type": "record",
+"fields": [ {"name": "attr4", "type": {"type": "array", "items": "int"}} ] }
 ]'''
 
     dirname = tempfile.mkdtemp()
@@ -114,6 +118,27 @@ def test_write_wrong_value():
                      " expected.*Unicode.*, int found"
 
     assert re.search(expected_error, str(excinfo.value))
+
+    with pytest.raises(TypeError) as excinfo:
+        with open(filename, 'w') as fp:
+            writer = pyavroc.AvroFileWriter(fp, schema)
+            writer.write(avtypes.Rec3(attr3=123))
+            writer.close()
+
+    expected_error = "when writing to Rec3.attr3, expected dict-like object, " \
+                     "int found"
+
+    assert expected_error in str(excinfo.value)
+
+    with pytest.raises(TypeError) as excinfo:
+        with open(filename, 'w') as fp:
+            writer = pyavroc.AvroFileWriter(fp, schema)
+            writer.write(avtypes.Rec4(attr4=123))
+            writer.close()
+
+    expected_error = "when writing to Rec4.attr4, expected list, int found"
+
+    assert expected_error in str(excinfo.value)
 
     shutil.rmtree(dirname)
 
