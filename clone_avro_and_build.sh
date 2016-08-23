@@ -19,9 +19,9 @@ set -eux
 STATIC=0
 [ "${1:-}" = '--static' ] && STATIC=1
 
-MYDIR=$(dirname $(readlink -f "$0"))
+cd $(dirname "$0")
 
-cd $MYDIR
+MYDIR=$(/bin/pwd)
 
 AVRO=$MYDIR/local_avro
 
@@ -89,7 +89,7 @@ cd build/lib*/pyavroc
 
 cd $MYDIR
 
-export PYTHONPATH=$(readlink -e build/lib*):$(readlink -e $AVROPY/build/lib*)
+export PYTHONPATH=$(echo $MYDIR/build/lib*):$(echo $AVROPY/build/lib*)
 
 cd tests
 
