@@ -14,6 +14,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+do_merge() {
+    if ! git merge --no-edit "$@"
+    then
+        grep -vE '^<<<<<<<|^=======|^>>>>>>>' lang/c/tests/CMakeLists.txt >lang/c/tests/CMakeLists.txt.new
+        mv lang/c/tests/CMakeLists.txt.new lang/c/tests/CMakeLists.txt
+        git add lang/c/tests/CMakeLists.txt
+        git commit --no-edit
+    fi
+}
+
 set -eux
 
 STATIC=0
@@ -25,7 +35,17 @@ MYDIR=$(/bin/pwd)
 
 AVRO=$MYDIR/local_avro
 
-[ -d $AVRO ] || git clone -b patches http://github.com/Byhiras/avro $(basename $AVRO)
+if ! [ -d $AVRO ]
+then
+    git clone https://github.com/apache/avro $(basename $AVRO)
+    cd $AVRO
+    git remote add fixedavro https://github.com/walshb/avro
+    git remote update
+    do_merge fixedavro/avro-1902-c-namespace-null
+    do_merge fixedavro/avro-1904-record-no-fields
+    do_merge fixedavro/avro-1906-file-no-records
+    do_merge fixedavro/avro-1528-enum-bounds
+fi
 
 # build avro
 
