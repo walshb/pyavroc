@@ -2,7 +2,8 @@
 
 set -eux
 
-MYDIR=$(dirname $(readlink -f "$0"))
+cd $(dirname "$0")
+MYDIR=$(/bin/pwd)
 
 AVRO=$MYDIR/local_avro
 
@@ -15,6 +16,6 @@ case $($PYTHON -c 'import sys; print(sys.version_info.major)') in
        ;;
 esac
 
-export PYTHONPATH=$(readlink -e build/lib*):$(readlink -e $AVROPY/build/lib*):${PYTHONPATH:-}
+export PYTHONPATH=$(echo build/lib*):$(echo $AVROPY/build/lib*):${PYTHONPATH:-}
 
 $PYTHON examples/benchmark.py

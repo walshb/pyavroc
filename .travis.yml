@@ -1,28 +1,30 @@
 language: python
-python:
-  - "2.6"
-  - "2.7"
-  - "3.4"
-  - "3.5"
+matrix:
+  include:
+    - os: linux
+      python: 2.6
+    - os: linux
+      python: 2.7
+    - os: linux
+      python: 3.4
+    - os: linux
+      python: 3.5
+    # Travis doesn't support Python on OSX, so use generic
+    - os: osx
+      language: generic
 addons:
   apt:
     packages:
-      - pandoc
       - curl
       - jq
+      - pandoc
 before_install:
   - uname -a
-  - lsb_release -a
-install:
-  - for TRY in $(seq 5); do PANDOC_META=$(curl --retry 5 https://api.github.com/repos/jgm/pandoc/releases/latest); [ -z "$PANDOC_META" ] || break; sleep 10; done; [ -n "$PANDOC_META" ] || exit 1
-  - PANDOC_URL=$(echo "$PANDOC_META" | jq -r '.assets[] | select(.name|contains(".deb")) | .browser_download_url')
-  - curl -Lo pandoc.deb $PANDOC_URL
-  - dpkg-deb -x pandoc.deb pandoc
-  - export PATH=$(readlink -f pandoc/usr/bin):$PATH
-  - pandoc --version
+  - if [ "$TRAVIS_OS_NAME" = "osx" ]; then brew update; brew install python2; virtualenv venv -p python2; . venv/bin/activate; else .travis/install_pandoc.sh; export PATH=$(readlink -f pandoc/usr/bin):$PATH; pandoc --version; fi
+  - .travis/install_jansson.sh
   - pip install pytest>=2.7.3 --upgrade
 script:
-  - ./clone_avro_and_build.sh --static
+  - export PKG_CONFIG_PATH=$(/bin/pwd)/local_jansson/build/lib/pkgconfig; echo $PKG_CONFIG_PATH; ./clone_avro_and_build.sh --static
   - ./run_benchmark.sh
 deploy:
   provider: pypi

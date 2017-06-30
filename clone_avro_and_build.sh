@@ -39,6 +39,8 @@ if ! [ -d $AVRO ]
 then
     git clone https://github.com/apache/avro $(basename $AVRO)
     cd $AVRO
+    git config --local user.name Patch
+    git config --local user.email patch@nowhere
     git remote add fixedavro https://github.com/walshb/avro
     git remote update
     do_merge fixedavro/avro-1902-c-namespace-null
@@ -55,6 +57,9 @@ then
     mv -n $AVRO/lang/c/src/CMakeLists.txt $AVRO/lang/c/src/orig_CMakeLists
     cp -v $AVRO/lang/c/src/orig_CMakeLists $AVRO/lang/c/src/CMakeLists.txt
     echo 'set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${CMAKE_SHARED_LIBRARY_C_FLAGS}")' >>$AVRO/lang/c/src/CMakeLists.txt
+    # workaround bug
+    sed -e 's|{JANSSON_INCLUDE_DIR}|{JANSSON_INCLUDE_DIRS}|' $AVRO/lang/c/CMakeLists.txt >$AVRO/lang/c/CMakeLists.txt.new
+    mv $AVRO/lang/c/CMakeLists.txt.new $AVRO/lang/c/CMakeLists.txt
 
     mkdir -p $AVRO/build $AVRO/dist
     cd $AVRO/build
@@ -67,6 +72,7 @@ then
 
     # use static lib
     [ $STATIC -eq 0 ] || rm -f $AVRO/dist/lib/libavro.so*
+    [ $STATIC -eq 0 ] || rm -f $AVRO/dist/lib/libavro.dylib*
 fi
 
 PYTHON=${PYTHON:-python}
@@ -99,15 +105,12 @@ then
     # a bit cheesy: get libraries from the cmake link.txt file
     export PYAVROC_LIBS=$(tr ' ' '\n' <$AVRO/build/src/CMakeFiles/avro-shared.dir/link.txt | grep '^-l' | cut -c3-)
     export LDFLAGS="-L$AVRO/dist/lib"
+    [ -d local_jansson ] && LDFLAGS="$LDFLAGS -L$MYDIR/local_jansson/build/lib"
 else
     export LDFLAGS="-L$AVRO/dist/lib -Wl,-rpath,$AVRO/dist/lib"
 fi
 
 $PYTHON setup.py build
-
-cd build/lib*/pyavroc
-
-cd $MYDIR
 
 export PYTHONPATH=$(echo $MYDIR/build/lib*):$(echo $AVROPY/build/lib*)
 
