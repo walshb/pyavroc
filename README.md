@@ -27,6 +27,18 @@ Name                                              | Description                 
 [fastavro](https://bitbucket.org/tebeka/fastavro) | python-avro improved, using Cython  | 10
 [pyavroc](https://github.com/Byhiras/pyavroc.git) | Python/C API on upstream Avro-C     | 40
 
+
+Installating the module
+-----------------------
+- Download and run cmake installation file from https://cmake.org/ (e.g. https://cmake.org/files/v3.12/cmake-3.12.1-Linux-x86_64.sh)
+- Once extracted just add its bin folder to the PATH so that `cmake` command is available
+- Clone this repo - `git clone https://github.com/Byhiras/pyavroc`
+- Run `./clone_avro_and_build.sh` in the cloned folder
+- This generates a build folder
+- `python setup.py bdist_wheel -d build` makes an executable wheel of the project and saves in the build/ folder
+- `cd build`
+- `pip install pyavroc-0.7.2-cp36-cp36m-linux_x86_64.whl`
+
 Building the module
 -------------------
 
