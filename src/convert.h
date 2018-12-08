@@ -36,7 +36,7 @@ PyObject *avro_to_python(ConvertInfo *info, avro_value_t *);
 
 int python_to_avro(ConvertInfo *info, PyObject *pyobj, avro_value_t *);
 
-PyObject *get_avro_types_type(void);
+PyTypeObject *get_avro_types_type(void);
 
 PyObject *declare_types(ConvertInfo *info, avro_schema_t schema);
 
