@@ -25,7 +25,10 @@ MYDIR=$(/bin/pwd)
 
 AVRO=$MYDIR/local_avro
 
-[ -d $AVRO ] || git clone -b patches http://github.com/Byhiras/avro $(basename $AVRO)
+[ -d $AVRO ] || git clone https://github.com/apache/avro $(basename $AVRO)
+
+[ -d $MYDIR/local_jansson ] \
+    && export PKG_CONFIG_PATH=$MYDIR/local_jansson/build/lib/pkgconfig
 
 # build avro
 
@@ -35,6 +38,8 @@ then
     mv -n $AVRO/lang/c/src/CMakeLists.txt $AVRO/lang/c/src/orig_CMakeLists
     cp -v $AVRO/lang/c/src/orig_CMakeLists $AVRO/lang/c/src/CMakeLists.txt
     echo 'set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${CMAKE_SHARED_LIBRARY_C_FLAGS}")' >>$AVRO/lang/c/src/CMakeLists.txt
+    # workaround bug
+    sed -e 's|{JANSSON_INCLUDE_DIR}|{JANSSON_INCLUDE_DIRS}|' -i $AVRO/lang/c/CMakeLists.txt
 
     mkdir -p $AVRO/build $AVRO/dist
     cd $AVRO/build
@@ -79,15 +84,12 @@ then
     # a bit cheesy: get libraries from the cmake link.txt file
     export PYAVROC_LIBS=$(tr ' ' '\n' <$AVRO/build/src/CMakeFiles/avro-shared.dir/link.txt | grep '^-l' | cut -c3-)
     export LDFLAGS="-L$AVRO/dist/lib"
+    [ -d $MYDIR/local_jansson ] && LDFLAGS="$LDFLAGS -L$MYDIR/local_jansson/build/lib"
 else
     export LDFLAGS="-L$AVRO/dist/lib -Wl,-rpath,$AVRO/dist/lib"
 fi
 
 $PYTHON setup.py build
-
-cd build/lib*/pyavroc
-
-cd $MYDIR
 
 export PYTHONPATH=$(echo $MYDIR/build/lib*):$(echo $AVROPY/build/lib*)
 

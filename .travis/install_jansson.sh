@@ -16,19 +16,29 @@
 
 set -eux
 
-MYDIR=$(dirname $(readlink -f "$0"))
+TOPDIR=$(/bin/pwd)
 
-AVRO=$MYDIR/local_avro
+VERSION=2.10
 
-PYTHON=${PYTHON:-python}
+URL=http://www.digip.org/jansson/releases/jansson-${VERSION}.tar.gz
 
-case $($PYTHON -c 'import sys; print(sys.version_info.major)') in
-    3) AVROPY=$AVRO/lang/py3
-        ;;
-    *) AVROPY=$AVRO/lang/py
-       ;;
-esac
+if ! [ -d local_jansson ]
+then
+    mkdir -p local_jansson
 
-export PYTHONPATH=$(readlink -e build/lib*):$(readlink -e $AVROPY/build/lib*):${PYTHONPATH:-}
+    cd local_jansson
 
-$PYTHON examples/benchmark.py
+    curl -LO $URL
+    tar xvf jansson-${VERSION}.tar.gz
+fi
+
+cd $TOPDIR/local_jansson/jansson-${VERSION}
+
+CFLAGS='-fPIC' ./configure --prefix=$TOPDIR/local_jansson/build
+
+make clean
+make
+make install
+
+# ensure static libs used
+rm -f $TOPDIR/local_jansson/build/lib/*.so* $TOPDIR/local_jansson/build/lib/*.dylib*
