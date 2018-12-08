@@ -21,18 +21,19 @@
 #include "error.h"
 #include <avro/schema.h>
 
-static PyObject *avro_types_type = NULL;
+static PyTypeObject *avro_types_type = NULL;
 
 /* type of the object which has the Avro types setattred onto it */
-PyObject *
+PyTypeObject *
 get_avro_types_type()
 {
     if (avro_types_type == NULL) {
-        avro_types_type = PyObject_CallFunction((PyObject *)&PyType_Type,
-                                                "s(O)N",
-                                                "AvroTypes",
-                                                (PyObject *)&PyBaseObject_Type,
-                                                PyDict_New());
+        avro_types_type
+            = (PyTypeObject *)PyObject_CallFunction((PyObject *)&PyType_Type,
+                                                    "s(O)N",
+                                                    "AvroTypes",
+                                                    (PyObject *)&PyBaseObject_Type,
+                                                    PyDict_New());
     }
 
     return avro_types_type;
@@ -125,11 +126,11 @@ declare_types(ConvertInfo *info, avro_schema_t schema)
 static PyObject *
 array_to_python(ConvertInfo *info, avro_value_t *value)
 {
-    size_t  element_count;
+    size_t element_count;
     PyObject *result;
-    size_t  i;
+    size_t i;
 
-    avro_value_get_size(value, &element_count);
+    NULL_ON_ERROR(avro_value_get_size(value, &element_count));
 
     result = PyList_New(element_count);
 
@@ -151,11 +152,11 @@ array_to_python(ConvertInfo *info, avro_value_t *value)
 static PyObject *
 enum_to_python(ConvertInfo *info, avro_value_t *value)
 {
-    int  val;
+    int val;
     const char *name;
     avro_schema_t schema;
 
-    avro_value_get_enum(value, &val);
+    NULL_ON_ERROR(avro_value_get_enum(value, &val));
 
     schema = avro_value_get_schema(value);
 
@@ -176,10 +177,11 @@ enum_to_python_object(ConvertInfo *info, avro_value_t *value)
     int val;
     const char *name;
 
+    NULL_ON_ERROR(avro_value_get_enum(value, &val));
+
     avro_schema_t schema = avro_value_get_schema(value);
     PyObject *type = get_python_enum_type(info->types, schema);
 
-    avro_value_get_enum(value, &val);
     name = avro_schema_enum_get(schema, val);
 
     PyObject *obj = PyObject_GetAttrString(type, name);
@@ -190,11 +192,11 @@ enum_to_python_object(ConvertInfo *info, avro_value_t *value)
 static PyObject *
 record_to_python(ConvertInfo *info, avro_value_t *value)
 {
-    size_t  field_count;
-    size_t  i;
+    size_t field_count;
+    size_t i;
     PyObject *result = PyDict_New();
 
-    avro_value_get_size(value, &field_count);
+    NULL_ON_ERROR(avro_value_get_size(value, &field_count));
 
     for (i = 0; i < field_count; i++) {
         avro_value_t  field_value;
@@ -223,14 +225,14 @@ record_to_python_object(ConvertInfo *info, avro_value_t *value)
     size_t field_count;
     size_t i;
 
+    NULL_ON_ERROR(avro_value_get_size(value, &field_count));
+
     avro_schema_t schema = avro_value_get_schema(value);
     PyObject *type = get_python_obj_type(info->types, schema);
 
     AvroRecord *obj = (AvroRecord *)PyObject_CallFunctionObjArgs(type, NULL);
 
     Py_DECREF(type);
-
-    avro_value_get_size(value, &field_count);
 
     for (i = 0; i < field_count; i++) {
         avro_value_t field_value;
@@ -249,11 +251,11 @@ record_to_python_object(ConvertInfo *info, avro_value_t *value)
 static PyObject *
 map_to_python(ConvertInfo *info, avro_value_t *value)
 {
-    size_t  element_count;
+    size_t element_count;
     PyObject *result = PyDict_New();
-    size_t  i;
+    size_t i;
 
-    avro_value_get_size(value, &element_count);
+    NULL_ON_ERROR(avro_value_get_size(value, &element_count));
 
     for (i = 0; i < element_count; i++) {
         const char  *key;
@@ -293,45 +295,45 @@ avro_to_python(ConvertInfo *info, avro_value_t *value)
     switch (type) {
     case AVRO_BOOLEAN:
         {
-            int  val;
-            avro_value_get_boolean(value, &val);
+            int val;
+            NULL_ON_ERROR(avro_value_get_boolean(value, &val));
             return PyBool_FromLong(val);
         }
 
     case AVRO_BYTES:
         {
-            const void  *buf;
-            size_t  size;
-            avro_value_get_bytes(value, &buf, &size);
+            const void *buf;
+            size_t size;
+            NULL_ON_ERROR(avro_value_get_bytes(value, &buf, &size));
             /* got pointer into underlying value. no need to free */
             return chars_size_to_pybytes(buf, size);
         }
 
     case AVRO_DOUBLE:
         {
-            double  val;
-            avro_value_get_double(value, &val);
+            double val;
+            NULL_ON_ERROR(avro_value_get_double(value, &val));
             return PyFloat_FromDouble(val);
         }
 
     case AVRO_FLOAT:
         {
-            float  val;
-            avro_value_get_float(value, &val);
+            float val;
+            NULL_ON_ERROR(avro_value_get_float(value, &val));
             return PyFloat_FromDouble(val);
         }
 
     case AVRO_INT32:
         {
-            int32_t  val;
-            avro_value_get_int(value, &val);
+            int32_t val;
+            NULL_ON_ERROR(avro_value_get_int(value, &val));
             return long_to_pyint(val);
         }
 
     case AVRO_INT64:
         {
-            int64_t  val;
-            avro_value_get_long(value, &val);
+            int64_t val;
+            NULL_ON_ERROR(avro_value_get_long(value, &val));
             return PyLong_FromLongLong((PY_LONG_LONG)val);
         }
 
@@ -346,9 +348,9 @@ avro_to_python(ConvertInfo *info, avro_value_t *value)
         {
             /* TODO: Convert the UTF-8 to the current
              * locale's character set */
-            const char  *buf;
-            size_t  size;
-            avro_value_get_string(value, &buf, &size);
+            const char *buf;
+            size_t size;
+            NULL_ON_ERROR(avro_value_get_string(value, &buf, &size));
             /* For strings, size includes the NUL terminator. */
             return chars_size_to_pystring(buf, size - 1);
         }
@@ -367,9 +369,9 @@ avro_to_python(ConvertInfo *info, avro_value_t *value)
 
     case AVRO_FIXED:
         {
-            const void  *buf;
-            size_t  size;
-            avro_value_get_fixed(value, &buf, &size);
+            const void *buf;
+            size_t size;
+            NULL_ON_ERROR(avro_value_get_fixed(value, &buf, &size));
             return chars_size_to_pystring((const char *)buf, size);
         }
 
@@ -642,7 +644,10 @@ python_to_record(ConvertInfo *info, PyObject *pyobj, avro_value_t *dest)
     size_t i;
     size_t field_count;
 
-    avro_value_get_size(dest, &field_count);
+    if ((rval = avro_value_get_size(dest, &field_count)) != 0) {
+        return set_avro_error(rval);
+    }
+
     for (i = 0; i < field_count; i++) {
         const char *field_name;
         avro_value_t field_value;

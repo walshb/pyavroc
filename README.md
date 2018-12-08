@@ -24,33 +24,32 @@ pyavroc is a Python API on top of upstream Avro-C. This means it reads about 40 
 Name                                              | Description                         | Relative speed (bigger is better)
 --------------------------------------------------|-------------------------------------|----------------------------------
 [python-avro](https://github.com/apache/avro.git) | Avro's implementation (pure Python) | 1
-[fastavro](https://bitbucket.org/tebeka/fastavro) | python-avro improved, using Cython  | 10
+[fastavro](https://github.com/fastavro/fastavro)  | python-avro improved, using Cython  | 10
 [pyavroc](https://github.com/Byhiras/pyavroc.git) | Python/C API on upstream Avro-C     | 40
 
-
-Installating the module
------------------------
-- Download and run cmake installation file from https://cmake.org/ (e.g. https://cmake.org/files/v3.12/cmake-3.12.1-Linux-x86_64.sh)
-- Once extracted just add its bin folder to the PATH so that `cmake` command is available
-- Clone this repo - `git clone https://github.com/Byhiras/pyavroc`
-- Run `./clone_avro_and_build.sh` in the cloned folder
-- This generates a build folder
-- `python setup.py bdist_wheel -d build` makes an executable wheel of the project and saves in the build/ folder
-- `cd build`
-- `pip install pyavroc-0.7.2-cp36-cp36m-linux_x86_64.whl`
 
 Building the module
 -------------------
 
-You will need to build Avro-C with a number of patches applied. This is available at https://github.com/Byhiras/avro.git, branch "patches".
+You will need to build Avro-C. This is available at https://github.com/apache/avro.git.
 
 Then you can build pyavroc, linking against the Avro-C shared library.
 
 The pyavroc repository contains the script `clone_avro_and_build.sh` which automates this process:
 
 ```bash
-./clone_avro_and_build.sh
+./clone_avro_and_build.sh --static
 ```
+
+Installing the module
+---------------------
+
+- Make sure cmake is available (eg. `apt-get install cmake`).
+- Run `./clone_avro_and_build.sh`
+- This generates a build folder
+- `python setup.py bdist_wheel -d build` makes an executable wheel of the project and saves in the build/ folder
+- `cd build`
+- `pip install pyavroc-0.7.2-cp36-cp36m-linux_x86_64.whl`
 
 Writing records
 ---------------

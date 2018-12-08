@@ -17,6 +17,12 @@
 #ifndef INC_ERROR_H
 #define INC_ERROR_H
 
+#define NULL_ON_ERROR(V)                                    \
+    if (V) {                                                \
+        PyErr_Format(PyExc_IOError, "%s", avro_strerror()); \
+        return NULL;                                        \
+    }
+
 void set_error_prefix(const char *format, ...);
 
 int set_avro_error(int rval);
