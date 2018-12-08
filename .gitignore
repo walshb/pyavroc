@@ -6,4 +6,5 @@
 *.egg-info
 .idea
 /local_avro/
+/local_jansson/
 /*.egg-info/
