@@ -39,7 +39,8 @@ then
     cp -v $AVRO/lang/c/src/orig_CMakeLists $AVRO/lang/c/src/CMakeLists.txt
     echo 'set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${CMAKE_SHARED_LIBRARY_C_FLAGS}")' >>$AVRO/lang/c/src/CMakeLists.txt
     # workaround bug
-    sed -e 's|{JANSSON_INCLUDE_DIR}|{JANSSON_INCLUDE_DIRS}|' -i $AVRO/lang/c/CMakeLists.txt
+    sed -e 's|{JANSSON_INCLUDE_DIR}|{JANSSON_INCLUDE_DIRS}|' $AVRO/lang/c/CMakeLists.txt >$AVRO/lang/c/CMakeLists.txt.new
+    mv $AVRO/lang/c/CMakeLists.txt.new $AVRO/lang/c/CMakeLists.txt
 
     mkdir -p $AVRO/build $AVRO/dist
     cd $AVRO/build
@@ -51,7 +52,7 @@ then
     make install
 
     # use static lib
-    [ $STATIC -eq 0 ] || rm -f $AVRO/dist/lib/libavro.so*
+    [ $STATIC -eq 0 ] || rm -f $AVRO/dist/lib/libavro.so* $AVRO/dist/lib/libavro.dylib*
 fi
 
 PYTHON=${PYTHON:-python}
