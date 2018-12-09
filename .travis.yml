@@ -12,6 +12,8 @@ matrix:
       python: 3.4
     - os: linux
       python: 3.5
+    - os: linux
+      python: 3.6
     # Travis doesn't support Python on OSX, so use generic
     - os: osx
       language: generic
@@ -25,7 +27,7 @@ before_install:
   - uname -a
   - if [ "$TRAVIS_OS_NAME" = "osx" ]; then .travis/macos_python.sh; . myenv/bin/activate; else .travis/install_pandoc.sh; export PATH=$TRAVIS_BUILD_DIR/pandoc/usr/bin:$PATH; pandoc --version; fi
   - .travis/install_jansson.sh
-  - pip install pytest>=2.7.3 --upgrade
+  - travis_retry pip install pytest>=2.7.3 --upgrade
 script:
   - ./clone_avro_and_build.sh --static
   - ./run_benchmark.sh
