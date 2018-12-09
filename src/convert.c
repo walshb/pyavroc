@@ -176,6 +176,7 @@ enum_to_python_object(ConvertInfo *info, avro_value_t *value)
 {
     int val;
     const char *name;
+    PyObject *obj;
 
     NULL_ON_ERROR(avro_value_get_enum(value, &val));
 
@@ -184,7 +185,7 @@ enum_to_python_object(ConvertInfo *info, avro_value_t *value)
 
     name = avro_schema_enum_get(schema, val);
 
-    PyObject *obj = PyObject_GetAttrString(type, name);
+    obj = PyObject_GetAttrString(type, name);
 
     return (PyObject *)obj;
 }

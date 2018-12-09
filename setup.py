@@ -37,7 +37,7 @@ if cflags:
 
 extra_libs = os.environ.get('PYAVROC_LIBS', '').split()
 
-ext_modules = [Extension('pyavroc/_pyavroc',
+ext_modules = [Extension('pyavroc._pyavroc',
                          ['src/pyavro.c',
                           'src/filereader.c',
                           'src/filewriter.c',

@@ -253,7 +253,7 @@ def test_write_wrong_type_primitive():
 def test_coerce_int_long_in_unions():
     schema = ''' [ "null", "long"] '''
 
-    with open('/dev/null', 'w') as fp:
+    with open('foobar.avro', 'wb') as fp:
         writer = pyavroc.AvroFileWriter(fp, schema)
         writer.write(33) # an integer.  Should be coerced to long without an error
         writer.close()
@@ -266,7 +266,7 @@ def test_coerce_int_long():
         }'''
     av_types = pyavroc.create_types(schema)
     rec = av_types.Rec(attr1=33) # an integer.  Should be coerced to long without an error
-    with open('/dev/null', 'w') as fp:
+    with open('foobar.avro', 'wb') as fp:
         writer = pyavroc.AvroFileWriter(fp, schema)
         writer.write(rec)
         writer.close()

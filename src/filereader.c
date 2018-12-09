@@ -163,10 +163,11 @@ AvroFileReader_iternext(AvroFileReader *self)
 {
     avro_value_t value;
     PyObject *result;
+    int rval;
 
     avro_generic_value_new(self->iface, &value);
 
-    int rval = avro_file_reader_read_value(self->reader, &value);
+    rval = avro_file_reader_read_value(self->reader, &value);
 
     if (rval) {
         avro_value_decref(&value);

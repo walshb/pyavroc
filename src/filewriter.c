@@ -33,11 +33,11 @@ AvroFileWriter_init(AvroFileWriter *self, PyObject *args, PyObject *kwds)
     char *codec = "null";
     int block_size = PYAVROC_BLOCK_SIZE;
 
+    static char *kwlist[] = { "pyfile", "schema_json", "codec", "block_size", NULL };
+
     self->pyfile = NULL;
     self->flags = 0;
     self->iface = NULL;
-
-    static char *kwlist[] = { "pyfile", "schema_json", "codec", "block_size", NULL };
 
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "OO|si", kwlist, &pyfile, &schema_json, &codec, &block_size)) {
         return -1;

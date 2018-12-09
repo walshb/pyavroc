@@ -76,7 +76,7 @@ cd $MYDIR
 
 rm -rf build dist
 
-export PYAVROC_CFLAGS="-I$AVRO/dist/include"
+export PYAVROC_CFLAGS="-Werror=declaration-after-statement -I$AVRO/dist/include"
 if [ $STATIC -ne 0 ]
 then
     mkdir -p pyavroc/avro

@@ -240,6 +240,7 @@ create_new_type(avro_schema_t schema)
     size_t i;
     const char *record_name = avro_schema_name(schema);
     size_t field_count = avro_schema_record_size(schema);
+    PyTypeObject *type;
 
     PyMemberDef *member_defs = (PyMemberDef *)PyMem_Malloc((field_count + 1) * sizeof(PyMemberDef));
 
@@ -253,7 +254,7 @@ create_new_type(avro_schema_t schema)
     }
     member_defs[field_count].name = NULL;
 
-    PyTypeObject *type = (PyTypeObject *)PyMem_Malloc(sizeof(PyTypeObject));
+    type = (PyTypeObject *)PyMem_Malloc(sizeof(PyTypeObject));
     memcpy(type, &empty_type_object, sizeof(PyTypeObject));
 
     type->tp_name = strdup(record_name);
