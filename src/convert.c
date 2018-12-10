@@ -177,11 +177,13 @@ enum_to_python_object(ConvertInfo *info, avro_value_t *value)
     int val;
     const char *name;
     PyObject *obj;
+    avro_schema_t schema;
+    PyObject *type;
 
     NULL_ON_ERROR(avro_value_get_enum(value, &val));
 
-    avro_schema_t schema = avro_value_get_schema(value);
-    PyObject *type = get_python_enum_type(info->types, schema);
+    schema = avro_value_get_schema(value);
+    type = get_python_enum_type(info->types, schema);
 
     name = avro_schema_enum_get(schema, val);
 
@@ -225,13 +227,16 @@ record_to_python_object(ConvertInfo *info, avro_value_t *value)
 {
     size_t field_count;
     size_t i;
+    avro_schema_t schema;
+    PyObject *type;
+    AvroRecord *obj;
 
     NULL_ON_ERROR(avro_value_get_size(value, &field_count));
 
-    avro_schema_t schema = avro_value_get_schema(value);
-    PyObject *type = get_python_obj_type(info->types, schema);
+    schema = avro_value_get_schema(value);
+    type = get_python_obj_type(info->types, schema);
 
-    AvroRecord *obj = (AvroRecord *)PyObject_CallFunctionObjArgs(type, NULL);
+    obj = (AvroRecord *)PyObject_CallFunctionObjArgs(type, NULL);
 
     Py_DECREF(type);
 
