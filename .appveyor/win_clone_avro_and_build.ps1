@@ -28,7 +28,7 @@ New-Item $janssondir -itemType directory
 
 Set-Location $janssondir
 
-$janssonver = "2.10"
+$janssonver = "2.12"
 $janssontgz = "jansson-$janssonver.tar.gz"
 $janssonurl = "http://www.digip.org/jansson/releases/$janssontgz"
 
@@ -37,6 +37,8 @@ $janssonurl = "http://www.digip.org/jansson/releases/$janssontgz"
 & tar -xzf $janssontgz
 
 Set-Location "jansson-$janssonver"
+
+& sed -e "s|/nologo||" -i CMakeLists.txt
 
 New-Item build -itemType directory
 
@@ -47,7 +49,7 @@ Set-Location build
 & nmake
 & nmake install
 
-$env:CMAKE_MODULE_PATH = "$janssondir\jansson-$janssonver\dist\cmake"
+$env:CMAKE_PREFIX_PATH = "$janssondir\jansson-$janssonver\dist\cmake"
 
 $avrodir = "$topdir\local_avro"
 
@@ -80,4 +82,25 @@ $env:LIB = "$avrodir\dist\lib;$env:LIB"
 $env:INCLUDE = "$janssondir\jansson-$janssonver\dist\include;$env:INCLUDE"
 $env:LIB = "$janssondir\jansson-$janssonver\dist\lib;$env:LIB"
 
+echo $env:INCLUDE
+echo $env:LIB
+
 & python setup.py build
+
+Set-Location "$topdir\local_avro\lang\py"
+
+& python setup.py build
+
+$pp1 = (Get-ChildItem -Path $topdir\build\lib*).FullName
+$pp2 = (Get-ChildItem -Path $topdir\local_avro\lang\py\build\lib*).FullName
+
+echo $pp1
+echo $pp2
+
+$env:PYTHONPATH = $pp1 + ';' + $pp2
+
+echo $env:PYTHONPATH
+
+Set-Location "$topdir\tests"
+
+& python -m pytest -sv .
