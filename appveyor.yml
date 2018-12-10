@@ -1,0 +1,15 @@
+branches:
+  only:
+    - bw-win-appveyor
+
+environment:
+  matrix:
+    - PYTHON: "C:\\Python27-x64"
+
+build_script:
+  - "set PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%"
+  - call "C:\Program Files\Microsoft SDKs\Windows\v7.1\Bin\SetEnv.cmd" /x64
+  - call "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" x86_amd64
+  - "python --version"
+  - "python -c \"import struct; print(struct.calcsize('P') * 8)\""
+  - ps: .\.appveyor\win_clone_avro_and_build.ps1
