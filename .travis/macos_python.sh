@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# Copyright 2017 Ben Walsh
+# Copyright 2018 Ben Walsh
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,20 +16,8 @@
 
 set -eux
 
-cd $(dirname "$0")
-MYDIR=$(/bin/pwd)
-
-AVRO=$MYDIR/local_avro
-
-PYTHON=${PYTHON:-python}
-
-case $($PYTHON -c 'import sys; print(sys.version_info.major)') in
-    3) AVROPY=$AVRO/lang/py3
-        ;;
-    *) AVROPY=$AVRO/lang/py
-       ;;
-esac
-
-export PYTHONPATH=$(echo build/lib*):$(echo $AVROPY/build/lib*):${PYTHONPATH:-}
-
-$PYTHON examples/benchmark.py
+brew update
+brew install python2 || true
+curl -LO https://pypi.python.org/packages/source/v/virtualenv/virtualenv-16.0.0.tar.gz
+tar -xf virtualenv-16.0.0.tar.gz
+python2 virtualenv-16.0.0/virtualenv.py -p python2 myenv
