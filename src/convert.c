@@ -142,6 +142,11 @@ array_to_python(ConvertInfo *info, avro_value_t *value)
 
         pyelement_value = avro_to_python(info, &element_value);
 
+        if (pyelement_value == NULL) {
+            Py_DECREF(result);
+            return NULL;
+        }
+
         /* steals a ref to pyelement_value */
         PyList_SET_ITEM(result, i, pyelement_value);
     }
@@ -184,6 +189,12 @@ enum_to_python_object(ConvertInfo *info, avro_value_t *value)
 
     name = avro_schema_enum_get(schema, val);
 
+    if (name == NULL) {
+        PyErr_SetString(PyExc_ValueError, "Enum value out of range");
+        /* enum value out of range */
+        return NULL;
+    }
+
     PyObject *obj = PyObject_GetAttrString(type, name);
 
     return (PyObject *)obj;
@@ -194,10 +205,11 @@ record_to_python(ConvertInfo *info, avro_value_t *value)
 {
     size_t field_count;
     size_t i;
-    PyObject *result = PyDict_New();
+    PyObject *result;
 
     NULL_ON_ERROR(avro_value_get_size(value, &field_count));
 
+    result = PyDict_New();
     for (i = 0; i < field_count; i++) {
         avro_value_t  field_value;
         const char  *field_name;
@@ -207,7 +219,20 @@ record_to_python(ConvertInfo *info, avro_value_t *value)
         avro_value_get_by_index(value, i, &field_value, &field_name);
 
         pykey = (PyObject *)chars_to_pystring(field_name);
+
+        if (pykey == NULL) {
+            Py_DECREF(result);
+            return NULL;
+        }
+
         pyelement_value = avro_to_python(info, &field_value);
+
+        if (pyelement_value == NULL) {
+            set_error_prefix("for element %R: ", pykey);
+            Py_DECREF(pykey);
+            Py_DECREF(result);
+            return NULL;
+        }
 
         /* increfs key and value */
         PyDict_SetItem(result, pykey, pyelement_value);
@@ -242,6 +267,11 @@ record_to_python_object(ConvertInfo *info, avro_value_t *value)
 
         pyelement_value = avro_to_python(info, &field_value);
 
+        if (pyelement_value == NULL) {
+            Py_DECREF(obj);
+            return NULL;
+        }
+
         obj->fields[i] = pyelement_value;
     }
 
@@ -252,10 +282,12 @@ static PyObject *
 map_to_python(ConvertInfo *info, avro_value_t *value)
 {
     size_t element_count;
-    PyObject *result = PyDict_New();
+    PyObject *result;
     size_t i;
 
     NULL_ON_ERROR(avro_value_get_size(value, &element_count));
+
+    result = PyDict_New();
 
     for (i = 0; i < element_count; i++) {
         const char  *key;
@@ -266,7 +298,20 @@ map_to_python(ConvertInfo *info, avro_value_t *value)
         avro_value_get_by_index(value, i, &element_value, &key);
 
         pykey = (PyObject *)chars_to_pystring(key);
+
+        if (pykey == NULL) {
+            Py_DECREF(result);
+            return NULL;
+        }
+
         pyelement_value = avro_to_python(info, &element_value);
+
+        if (pyelement_value == NULL) {
+            set_error_prefix("for element %R: ", pykey);
+            Py_DECREF(pykey);
+            Py_DECREF(result);
+            return NULL;
+        }
 
         /* increfs key and value */
         PyDict_SetItem(result, pykey, pyelement_value);
@@ -391,6 +436,7 @@ avro_to_python(ConvertInfo *info, avro_value_t *value)
         return union_to_python(info, value);
 
     default:
+        PyErr_Format(PyExc_TypeError, "Unknown type %d", (int)type);
         return NULL;
     }
 }
